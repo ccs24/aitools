@@ -1,0 +1,243 @@
+{{!
+    Cohort Management Template for AI Tools Subplugins
+    
+    Context variables:
+    * subplugin - Subplugin component name
+    * subplugin_clean - Clean subplugin name
+    * has_current_cohorts - Boolean if cohorts are assigned
+    * current_cohorts - Array of assigned cohorts
+    * has_available_cohorts - Boolean if cohorts available to add
+    * available_cohorts - Array of available cohorts
+    * access_stats - Access statistics object
+    * back_url - URL back to settings
+}}
+
+<div class="cohort-management">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-2">
+                <i class="fa fa-users text-primary me-2"></i>
+                {{#str}}cohort_management, local_aitools{{/str}}
+            </h2>
+            <p class="text-muted mb-0">
+                {{#str}}managing_cohorts_for, local_aitools{{/str}}: <strong>{{subplugin_clean}}</strong>
+            </p>
+        </div>
+        <div>
+            <a href="{{back_url}}" class="btn btn-outline-secondary">
+                <i class="fa fa-arrow-left me-1"></i>
+                {{#str}}back_to_settings, local_aitools{{/str}}
+            </a>
+        </div>
+    </div>
+
+    <!-- Access Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card {{#access_stats.unrestricted}}bg-warning{{/access_stats.unrestricted}}{{^access_stats.unrestricted}}bg-info{{/access_stats.unrestricted}} text-white">
+                <div class="card-body text-center">
+                    <h4 class="mb-1">
+                        {{#access_stats.unrestricted}}
+                            <i class="fa fa-globe"></i>
+                        {{/access_stats.unrestricted}}
+                        {{^access_stats.unrestricted}}
+                            <i class="fa fa-lock"></i>
+                        {{/access_stats.unrestricted}}
+                    </h4>
+                    <small>
+                        {{#access_stats.unrestricted}}
+                            {{#str}}unrestricted_access, local_aitools{{/str}}
+                        {{/access_stats.unrestricted}}
+                        {{^access_stats.unrestricted}}
+                            {{#str}}restricted_access, local_aitools{{/str}}
+                        {{/access_stats.unrestricted}}
+                    </small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-primary text-white">
+                <div class="card-body text-center">
+                    <h4 class="mb-1">{{access_stats.total_cohorts}}</h4>
+                    <small>{{#str}}assigned_cohorts, local_aitools{{/str}}</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-success text-white">
+                <div class="card-body text-center">
+                    <h4 class="mb-1">{{access_stats.total_users}}</h4>
+                    <small>{{#str}}users_with_access, local_aitools{{/str}}</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Important Notice -->
+    <div class="alert alert-info mb-4">
+        <div class="d-flex align-items-start">
+            <i class="fa fa-info-circle fa-lg me-3 mt-1"></i>
+            <div>
+                <strong>{{#str}}how_cohort_access_works, local_aitools{{/str}}</strong>
+                <ul class="mb-0 mt-2">
+                    <li>{{#str}}cohort_rule_1, local_aitools{{/str}}</li>
+                    <li>{{#str}}cohort_rule_2, local_aitools{{/str}}</li>
+                    <li>{{#str}}cohort_rule_3, local_aitools{{/str}}</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Current Cohorts -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fa fa-users me-2"></i>
+                        {{#str}}assigned_cohorts, local_aitools{{/str}}
+                    </h5>
+                    {{#has_current_cohorts}}
+                        <a href="{{clear_all_url}}" 
+                           class="btn btn-outline-danger btn-sm"
+                           onclick="return confirm('{{#str}}confirm_clear_all, local_aitools{{/str}}')">
+                            <i class="fa fa-trash"></i>
+                            {{#str}}clear_all, local_aitools{{/str}}
+                        </a>
+                    {{/has_current_cohorts}}
+                </div>
+                <div class="card-body">
+                    {{#has_current_cohorts}}
+                        <div class="list-group list-group-flush">
+                            {{#current_cohorts}}
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-1">{{name}}</h6>
+                                        {{#idnumber}}
+                                            <small class="text-muted">{{#str}}idnumber, core{{/str}}: {{idnumber}}</small>
+                                        {{/idnumber}}
+                                        {{#description}}
+                                            <p class="mb-1 text-muted small">{{description}}</p>
+                                        {{/description}}
+                                    </div>
+                                    <a href="{{remove_url}}" 
+                                       class="btn btn-outline-danger btn-sm"
+                                       onclick="return confirm('{{#str}}confirm_remove_cohort, local_aitools{{/str}}')">
+                                        <i class="fa fa-times"></i>
+                                    </a>
+                                </div>
+                            {{/current_cohorts}}
+                        </div>
+                    {{/has_current_cohorts}}
+                    
+                    {{^has_current_cohorts}}
+                        <div class="text-center text-muted py-4">
+                            <i class="fa fa-globe fa-3x mb-3"></i>
+                            <h5>{{#str}}no_cohort_restrictions, local_aitools{{/str}}</h5>
+                            <p>{{#str}}everyone_has_access, local_aitools{{/str}}</p>
+                        </div>
+                    {{/has_current_cohorts}}
+                </div>
+            </div>
+        </div>
+
+        <!-- Available Cohorts -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fa fa-plus-circle me-2"></i>
+                        {{#str}}available_cohorts, local_aitools{{/str}}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {{#has_available_cohorts}}
+                        <div class="list-group list-group-flush">
+                            {{#available_cohorts}}
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-1">{{name}}</h6>
+                                        {{#idnumber}}
+                                            <small class="text-muted">{{#str}}idnumber, core{{/str}}: {{idnumber}}</small>
+                                        {{/idnumber}}
+                                        {{#description}}
+                                            <p class="mb-1 text-muted small">{{description}}</p>
+                                        {{/description}}
+                                    </div>
+                                    <a href="{{add_url}}" class="btn btn-outline-success btn-sm">
+                                        <i class="fa fa-plus"></i>
+                                        {{#str}}add, core{{/str}}
+                                    </a>
+                                </div>
+                            {{/available_cohorts}}
+                        </div>
+                    {{/has_available_cohorts}}
+                    
+                    {{^has_available_cohorts}}
+                        <div class="text-center text-muted py-4">
+                            <i class="fa fa-check-circle fa-3x mb-3"></i>
+                            <h5>{{#str}}all_cohorts_assigned, local_aitools{{/str}}</h5>
+                            <p>{{#str}}no_more_cohorts_available, local_aitools{{/str}}</p>
+                        </div>
+                    {{/has_available_cohorts}}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Help Section -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fa fa-question-circle me-2"></i>
+                {{#str}}help_and_examples, local_aitools{{/str}}
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>{{#str}}common_use_cases, local_aitools{{/str}}</h6>
+                    <ul>
+                        <li>{{#str}}use_case_pilot, local_aitools{{/str}}</li>
+                        <li>{{#str}}use_case_department, local_aitools{{/str}}</li>
+                        <li>{{#str}}use_case_premium, local_aitools{{/str}}</li>
+                        <li>{{#str}}use_case_gradual, local_aitools{{/str}}</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h6>{{#str}}management_tips, local_aitools{{/str}}</h6>
+                    <ul>
+                        <li>{{#str}}tip_test_first, local_aitools{{/str}}</li>
+                        <li>{{#str}}tip_monitor_usage, local_aitools{{/str}}</li>
+                        <li>{{#str}}tip_communicate, local_aitools{{/str}}</li>
+                        <li>{{#str}}tip_backup_plan, local_aitools{{/str}}</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{#js}}
+require(['jquery'], function($) {
+    $(document).ready(function() {
+        // Add confirmation for destructive actions
+        $('.btn-outline-danger').on('click', function(e) {
+            if (!confirm('{{#str}}confirm_action, local_aitools{{/str}}')) {
+                e.preventDefault();
+                return false;
+            }
+        });
+        
+        // Highlight effects for adding/removing
+        $('.btn-outline-success').on('click', function() {
+            $(this).closest('.list-group-item').addClass('bg-light');
+        });
+        
+        $('.btn-outline-danger').on('click', function() {
+            $(this).closest('.list-group-item').addClass('bg-danger-light');
+        });
+    });
+});
+{{/js}}

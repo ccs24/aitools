@@ -1,0 +1,173 @@
+{{!
+    AI Tools Dashboard Template
+    
+    Context variables:
+    * user_fullname - Current user's name
+    * has_blocks - Boolean if dashboard blocks exist
+    * blocks - Array of dashboard blocks
+    * has_tools - Boolean if tools exist
+    * tools_categories - Array of tool categories
+    * statistics - Statistics data
+    * can_manage - Boolean if user can manage
+}}
+
+<div class="aitools-dashboard">
+    <div class="dashboard-header mb-4">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="h2 mb-2">
+                    <i class="fa fa-robot text-primary me-2"></i>
+                    {{#str}}welcome_user, local_aitools{{/str}}
+                </h1>
+                <p class="text-muted mb-0">
+                    {{#str}}dashboard_subtitle, local_aitools{{/str}}
+                </p>
+            </div>
+            <div class="col-md-4 text-end">
+                {{#can_manage}}
+                    <a href="/admin/settings.php?section=local_aitools" class="btn btn-outline-primary">
+                        <i class="fa fa-cog"></i> {{#str}}manage, local_aitools{{/str}}
+                    </a>
+                {{/can_manage}}
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Overview -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body text-center">
+                    <h3 class="mb-1">{{statistics.total_plugins}}</h3>
+                    <small>{{#str}}active_plugins, local_aitools{{/str}}</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body text-center">
+                    <h3 class="mb-1">{{statistics.total_tools}}</h3>
+                    <small>{{#str}}available_tools, local_aitools{{/str}}</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body text-center">
+                    <h3 class="mb-1">{{statistics.total_blocks}}</h3>
+                    <small>{{#str}}dashboard_blocks, local_aitools{{/str}}</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body text-center">
+                    <h3 class="mb-1">24/7</h3>
+                    <small>{{#str}}availability, local_aitools{{/str}}</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard Blocks -->
+    {{#has_blocks}}
+        <div class="dashboard-blocks mb-5">
+            <h3 class="mb-3">
+                <i class="fa fa-th-large me-2"></i>
+                {{#str}}dashboard_overview, local_aitools{{/str}}
+            </h3>
+            <div class="row">
+                {{#blocks}}
+                    <div class="col-md-{{#eq size "large"}}6{{/eq}}{{#eq size "medium"}}4{{/eq}}{{#eq size "small"}}3{{/eq}}{{^size}}4{{/size}} mb-4">
+                        <div class="card h-100 dashboard-block" data-plugin="{{plugin}}" data-block="{{block_key}}">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="card-title mb-0">{{title}}</h5>
+                                <small class="text-muted">{{plugin}}</small>
+                            </div>
+                            <div class="card-body">
+                                {{> {{{template}}} }}
+                            </div>
+                        </div>
+                    </div>
+                {{/blocks}}
+            </div>
+        </div>
+    {{/has_blocks}}
+
+    <!-- Tools Categories -->
+    {{#has_tools}}
+        <div class="tools-section">
+            <h3 class="mb-4">
+                <i class="fa fa-tools me-2"></i>
+                {{#str}}available_tools, local_aitools{{/str}}
+            </h3>
+            
+            {{#tools_categories}}
+                <div class="tools-category mb-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <h4 class="me-3 mb-0">
+                            <i class="fa fa-folder-open text-primary"></i>
+                            {{category_name}}
+                        </h4>
+                        <span class="badge bg-secondary">{{tools_count}} {{#str}}tools, local_aitools{{/str}}</span>
+                    </div>
+                    
+                    <div class="row">
+                        {{#tools}}
+                            <div class="col-md-4 col-lg-3 mb-3">
+                                <div class="card tool-card h-100">
+                                    <div class="card-body text-center">
+                                        <div class="tool-icon mb-3">
+                                            <i class="{{icon}} fa-2x text-primary"></i>
+                                        </div>
+                                        <h6 class="card-title">{{title}}</h6>
+                                        {{#description}}
+                                            <p class="card-text small text-muted">{{description}}</p>
+                                        {{/description}}
+                                        <a href="{{url}}" class="btn btn-primary btn-sm">
+                                            {{#str}}open_tool, local_aitools{{/str}}
+                                        </a>
+                                    </div>
+                                    <div class="card-footer text-center">
+                                        <small class="text-muted">{{plugin}}</small>
+                                    </div>
+                                </div>
+                            </div>
+                        {{/tools}}
+                    </div>
+                </div>
+            {{/tools_categories}}
+        </div>
+    {{/has_tools}}
+
+    {{^has_tools}}
+        <div class="alert alert-info text-center">
+            <i class="fa fa-info-circle fa-2x mb-2"></i>
+            <h4>{{#str}}no_tools_available, local_aitools{{/str}}</h4>
+            <p>{{#str}}no_tools_description, local_aitools{{/str}}</p>
+        </div>
+    {{/has_tools}}
+</div>
+
+{{#js}}
+require(['jquery'], function($) {
+    $(document).ready(function() {
+        // Tool card hover effects
+        $('.tool-card').hover(
+            function() {
+                $(this).addClass('shadow-lg').css('transform', 'translateY(-5px)');
+            },
+            function() {
+                $(this).removeClass('shadow-lg').css('transform', 'translateY(0)');
+            }
+        );
+        
+        // Dashboard block interactions
+        $('.dashboard-block').on('click', function() {
+            var plugin = $(this).data('plugin');
+            var block = $(this).data('block');
+            // Handle block click if needed
+        });
+    });
+});
+{{/js}}

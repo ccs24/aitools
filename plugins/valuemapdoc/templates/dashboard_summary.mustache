@@ -1,0 +1,35 @@
+{{!
+    Dashboard Summary Block for ValueMapDoc
+    
+    Context variables:
+    * data.content_count - Number of documents
+    * data.entries_count - Number of value map entries  
+    * data.user_name - User's full name
+}}
+
+<div class="valuemap-summary">
+    <div class="row mb-3">
+        <div class="col-6">
+            <div class="text-center">
+                <h4 class="text-primary mb-1">{{data.content_count}}</h4>
+                <small class="text-muted">Documents</small>
+            </div>
+        </div>
+        <div class="col-6">
+            <div class="text-center">
+                <h4 class="text-success mb-1">{{data.entries_count}}</h4>
+                <small class="text-muted">Value Maps</small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="text-center text-muted mb-3">
+        <small>Welcome {{data.user_name}}!</small>
+    </div>
+    
+    <div class="mt-3">
+        <a href="/local/aitools/plugins/valuemapdoc/my_content.php" class="btn btn-primary btn-sm w-100">
+            View All Content
+        </a>
+    </div>
+</div>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="local/aitools/db" VERSION="20250915" COMMENT="XMLDB file for Moodle local/aitools"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
+>
+  <TABLES>
+    <TABLE NAME="local_aitools_cohorts" COMMENT="Cohort access control for AI Tools subplugins">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="subplugin" TYPE="char" LENGTH="100" NOTNULL="true" COMMENT="Subplugin component name"/>
+        <FIELD NAME="cohortid" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="Cohort ID"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="true"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="cohortid" TYPE="foreign" FIELDS="cohortid" REFTABLE="cohort" REFFIELDS="id"/>
+        <KEY NAME="usermodified" TYPE="foreign" FIELDS="usermodified" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="subplugin" UNIQUE="false" FIELDS="subplugin"/>
+        <INDEX NAME="subplugin_cohort" UNIQUE="true" FIELDS="subplugin, cohortid"/>
+      </INDEXES>
+    </TABLE>
+  </TABLES>
+</XMLDB>

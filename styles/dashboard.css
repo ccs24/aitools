@@ -1,0 +1,194 @@
+/* AI Tools Dashboard Styles */
+
+.aitools-dashboard {
+    padding: 20px 0;
+}
+
+.dashboard-header h1 {
+    color: #333;
+    font-weight: 600;
+}
+
+.dashboard-header .fa-robot {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+/* Statistics Cards */
+.card {
+    border-radius: 12px;
+    border: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+}
+
+.card h3 {
+    font-size: 2.5rem;
+    font-weight: 700;
+}
+
+/* Dashboard Blocks */
+.dashboard-block {
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.dashboard-block:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+}
+
+.dashboard-block.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.dashboard-block.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #007bff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Tools Section */
+.tools-category {
+    margin-bottom: 2rem;
+}
+
+.tools-category h4 {
+    color: #495057;
+    font-weight: 600;
+}
+
+.tool-card {
+    border-radius: 12px;
+    border: 1px solid #e9ecef;
+    transition: all 0.3s ease;
+    height: 100%;
+}
+
+.tool-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    border-color: #007bff;
+}
+
+.tool-icon {
+    width: 60px;
+    height: 60px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    color: white;
+    margin-bottom: 15px;
+}
+
+.tool-card .card-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.tool-card .card-text {
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+.tool-card .btn {
+    border-radius: 20px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.tool-card .btn:hover {
+    transform: scale(1.05);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .dashboard-header .col-md-4 {
+        text-align: center !important;
+        margin-top: 15px;
+    }
+    
+    .card h3 {
+        font-size: 2rem;
+    }
+    
+    .tool-card {
+        margin-bottom: 15px;
+    }
+}
+
+/* Empty State */
+.alert.text-center {
+    padding: 60px 20px;
+    border-radius: 12px;
+}
+
+.alert.text-center .fa-info-circle {
+    color: #007bff;
+    margin-bottom: 20px;
+}
+
+/* Badge Styling */
+.badge {
+    font-size: 0.75rem;
+    padding: 0.5em 0.75em;
+    border-radius: 20px;
+}
+
+/* Button Groups */
+.btn-group .btn {
+    border-radius: 0;
+}
+
+.btn-group .btn:first-child {
+    border-radius: 6px 0 0 6px;
+}
+
+.btn-group .btn:last-child {
+    border-radius: 0 6px 6px 0;
+}
+
+/* Utility Classes */
+.text-primary {
+    color: #007bff !important;
+}
+
+.text-success {
+    color: #28a745 !important;
+}
+
+.text-info {
+    color: #17a2b8 !important;
+}
+
+.text-warning {
+    color: #ffc107 !important;
+}
