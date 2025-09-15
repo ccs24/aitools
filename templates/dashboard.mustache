@@ -4,7 +4,7 @@
     Context variables:
     * user_fullname - Current user's name
     * has_blocks - Boolean if dashboard blocks exist
-    * blocks - Array of dashboard blocks
+    * blocks - Array of dashboard blocks with column_class and rendered_content
     * has_tools - Boolean if tools exist
     * tools_categories - Array of tool categories
     * statistics - Statistics data
@@ -78,14 +78,14 @@
             </h3>
             <div class="row">
                 {{#blocks}}
-                    <div class="col-md-{{#eq size "large"}}6{{/eq}}{{#eq size "medium"}}4{{/eq}}{{#eq size "small"}}3{{/eq}}{{^size}}4{{/size}} mb-4">
+                    <div class="{{column_class}} mb-4">
                         <div class="card h-100 dashboard-block" data-plugin="{{plugin}}" data-block="{{block_key}}">
                             <div class="card-header d-flex justify-content-between align-items-center">
                                 <h5 class="card-title mb-0">{{title}}</h5>
                                 <small class="text-muted">{{plugin}}</small>
                             </div>
                             <div class="card-body">
-                                {{> {{{template}}} }}
+                                {{{rendered_content}}}
                             </div>
                         </div>
                     </div>

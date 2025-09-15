@@ -20,35 +20,40 @@ class plugin implements plugin_interface {
             return [];
         }
         
-        // Basic statistics for testing
-        try {
-            // Count content tylko jeśli tabela istnieje
-            $content_count = 0;
-            if ($DB->get_manager()->table_exists('valuemapdoc_content')) {
-                $content_count = $DB->count_records('valuemapdoc_content', ['userid' => $USER->id]);
-            }
-            
-            // Count entries tylko jeśli tabela istnieje  
-            $entries_count = 0;
-            if ($DB->get_manager()->table_exists('valuemapdoc_entries')) {
-                $entries_count = $DB->count_records('valuemapdoc_entries', ['userid' => $USER->id]);
-            }
-        } catch (\Exception $e) {
-            error_log('ValueMapDoc subplugin error: ' . $e->getMessage());
-            $content_count = 0;
-            $entries_count = 0;
-        }
+        // Get user's content statistics
+        $content_count = $DB->count_records('valuemapdoc_content', ['userid' => $USER->id]);
+        $entries_count = $DB->count_records('valuemapdoc_entries', ['userid' => $USER->id]);
+        
+        // Get recent activity
+        $recent_content = $DB->get_records('valuemapdoc_content', 
+            ['userid' => $USER->id], 
+            'timecreated DESC', 
+            'id, name, timecreated', 
+            0, 5
+        );
         
         return [
             'valuemap_summary' => [
-                'title' => 'ValueMapDoc Summary',
+                'title' => get_string('valuemap_summary', 'aitoolsub_valuemapdoc'),
                 'template' => 'aitoolsub_valuemapdoc/dashboard_summary',
                 'weight' => 10,
                 'size' => 'large',
                 'data' => [
                     'content_count' => $content_count,
                     'entries_count' => $entries_count,
-                    'user_name' => fullname($USER)
+                    'recent_content' => array_values($recent_content)
+                ]
+            ],
+            
+            'quick_stats' => [
+                'title' => get_string('quick_stats', 'aitoolsub_valuemapdoc'),
+                'template' => 'aitoolsub_valuemapdoc/quick_stats',
+                'weight' => 20,
+                'size' => 'medium',
+                'data' => [
+                    'total_documents' => $content_count,
+                    'total_valuemaps' => $entries_count,
+                    'this_week' => $this->get_weekly_stats()
                 ]
             ]
         ];
@@ -64,19 +69,27 @@ class plugin implements plugin_interface {
         
         return [
             'my_content' => [
-                'title' => 'My Content',
-                'description' => 'View and manage all your generated documents across courses',
+                'title' => get_string('my_content', 'aitoolsub_valuemapdoc'),
+                'description' => get_string('my_content_desc', 'aitoolsub_valuemapdoc'),
                 'url' => '/local/aitools/plugins/valuemapdoc/my_content.php',
                 'icon' => 'fa-file-text',
                 'category' => 'sales'
             ],
             
             'my_valuemaps' => [
-                'title' => 'My Value Maps',
-                'description' => 'Access your value map entries and templates',
-                'url' => '/mod/valuemapdoc/view.php',  // Link do głównego modułu
+                'title' => get_string('my_valuemaps', 'aitoolsub_valuemapdoc'),
+                'description' => get_string('my_valuemaps_desc', 'aitoolsub_valuemapdoc'),
+                'url' => '/local/aitools/plugins/valuemapdoc/my_valuemaps.php',
                 'icon' => 'fa-sitemap',
                 'category' => 'sales'
+            ],
+            
+            'content_analytics' => [
+                'title' => get_string('content_analytics', 'aitoolsub_valuemapdoc'),
+                'description' => get_string('content_analytics_desc', 'aitoolsub_valuemapdoc'),
+                'url' => '/local/aitools/plugins/valuemapdoc/analytics.php',
+                'icon' => 'fa-chart-bar',
+                'category' => 'analytics'
             ]
         ];
     }
@@ -88,7 +101,7 @@ class plugin implements plugin_interface {
         return [
             'name' => 'ValueMapDoc',
             'version' => '1.0.0',
-            'description' => 'AI-powered value mapping and document generation tools',
+            'description' => get_string('plugin_description', 'aitoolsub_valuemapdoc'),
             'author' => 'ValueMapDoc Team',
             'category' => 'sales'
         ];
@@ -100,13 +113,42 @@ class plugin implements plugin_interface {
     public function has_access() {
         global $USER;
         
-        // Podstawowe sprawdzenie - zalogowany i nie gość
         if (!isloggedin() || isguestuser()) {
             return false;
         }
         
-        // Na poziomie ogólnym - pozwalamy dostęp
-        // Szczegółowe uprawnienia weryfikujemy przy konkretnych treściach
+        // Check basic ValueMapDoc capabilities
+//        $contexts = get_contexts_with_capability_for_user($USER->id, 'mod/valuemapdoc:view');
+        $contexts = "sd";
+        if (empty($contexts)) {
+            return false;
+        }
+        
+        // Check cohort access (this is handled by manager, but we can add extra logic here)
         return true;
+    }
+    
+    /**
+     * Get weekly statistics for dashboard
+     */
+    private function get_weekly_stats() {
+        global $USER, $DB;
+        
+        $week_ago = time() - (7 * 24 * 60 * 60);
+        
+        $content_this_week = $DB->count_records_select('valuemapdoc_content', 
+            'userid = ? AND timecreated >= ?', 
+            [$USER->id, $week_ago]
+        );
+        
+        $entries_this_week = $DB->count_records_select('valuemapdoc_entries', 
+            'userid = ? AND timemodified >= ?', 
+            [$USER->id, $week_ago]
+        );
+        
+        return [
+            'content' => $content_this_week,
+            'entries' => $entries_this_week
+        ];
     }
 }

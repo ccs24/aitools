@@ -1,0 +1,75 @@
+{{!
+    Quick Stats Block for ValueMapDoc Dashboard
+    
+    Context variables:
+    * data.total_documents - Total documents count
+    * data.total_valuemaps - Total value maps count
+    * data.this_week.content - Documents created this week
+    * data.this_week.entries - Value maps created this week
+}}
+
+<div class="quick-stats">
+    <div class="row text-center">
+        <div class="col-12 mb-3">
+            <div class="stat-circle mx-auto">
+                <div class="circle-content">
+                    <h3 class="mb-0 text-primary">{{data.total_documents}}</h3>
+                    <small class="text-muted">{{#str}}total_docs, aitoolsub_valuemapdoc{{/str}}</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="progress-stats">
+        <div class="mb-2">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <small class="text-muted">{{#str}}this_week, aitoolsub_valuemapdoc{{/str}}</small>
+                <small class="fw-bold">{{data.this_week.content}} {{#str}}new, aitoolsub_valuemapdoc{{/str}}</small>
+            </div>
+            <div class="progress" style="height: 6px;">
+                <div class="progress-bar bg-primary" 
+                     style="width: {{#if data.this_week.content}}70{{else}}5{{/if}}%"></div>
+            </div>
+        </div>
+        
+        <div class="mb-2">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <small class="text-muted">{{#str}}value_maps, aitoolsub_valuemapdoc{{/str}}</small>
+                <small class="fw-bold">{{data.total_valuemaps}}</small>
+            </div>
+            <div class="progress" style="height: 6px;">
+                <div class="progress-bar bg-success" 
+                     style="width: {{#if data.total_valuemaps}}60{{else}}5{{/if}}%"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="mt-3 text-center">
+        <a href="/local/aitools/plugins/valuemapdoc/analytics.php" 
+           class="btn btn-outline-primary btn-sm">
+            <i class="fa fa-chart-bar me-1"></i>
+            {{#str}}view_analytics, aitoolsub_valuemapdoc{{/str}}
+        </a>
+    </div>
+</div>
+
+<style>
+.stat-circle {
+    width: 80px;
+    height: 80px;
+    border: 3px solid #007bff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.circle-content {
+    text-align: center;
+}
+
+.progress-stats .progress {
+    border-radius: 3px;
+}
+</style>

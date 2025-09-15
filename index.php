@@ -22,11 +22,48 @@ $blocks = manager::get_dashboard_blocks();
 $tools = manager::get_tools();
 $statistics = manager::get_statistics();
 
+// Prepare blocks with column size classes and pre-rendered content
+$prepared_blocks = [];
+$renderer = $PAGE->get_renderer('local_aitools');
+
+foreach ($blocks as $block) {
+    // Determine column size based on block size
+    switch ($block['size'] ?? 'medium') {
+        case 'large':
+            $column_class = 'col-md-6';
+            break;
+        case 'small':
+            $column_class = 'col-md-3';
+            break;
+        case 'medium':
+        default:
+            $column_class = 'col-md-4';
+            break;
+    }
+    
+    $block['column_class'] = $column_class;
+    
+    // Pre-render the block content using the specified template
+    try {
+        if (isset($block['template']) && !empty($block['template'])) {
+            $block['rendered_content'] = $renderer->render_from_template($block['template'], $block);
+        } else {
+            $block['rendered_content'] = '<p class="text-muted">No template specified</p>';
+        }
+    } catch (Exception $e) {
+        // Fallback if template rendering fails
+        $block['rendered_content'] = '<div class="alert alert-warning">Template error: ' . htmlspecialchars($e->getMessage()) . '</div>';
+        error_log('AI Tools block rendering error: ' . $e->getMessage());
+    }
+    
+    $prepared_blocks[] = $block;
+}
+
 // Prepare template data
 $template_data = [
     'user_fullname' => fullname($USER),
-    'has_blocks' => !empty($blocks),
-    'blocks' => $blocks,
+    'has_blocks' => !empty($prepared_blocks),
+    'blocks' => $prepared_blocks,
     'has_tools' => !empty($tools),
     'tools_categories' => [],
     'statistics' => $statistics,
