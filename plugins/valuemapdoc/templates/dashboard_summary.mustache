@@ -32,8 +32,8 @@
             </h6>
             {{#data.recent_content}}
                 <div class="recent-item mb-2 p-2 bg-light rounded">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <a href="{{{view_url}}}" >
+                    <a href="{{{view_url}}}" class="d-flex justify-content-between align-items-start">
+                        <div href="{{{view_url}}}" >
                         <div>
                             <small class="fw-bold">{{name}}</small>
                             <br>
@@ -42,8 +42,8 @@
                             <span class="btn btn-sm btn-outline-primary">
                             <i class="fa fa-eye"></i>
                             </span>
-                        </a>
-                    </div>
+                        </div>
+                    </a>
                 </div>
             {{/data.recent_content}}
         </div>

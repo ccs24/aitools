@@ -11,6 +11,7 @@ use external_single_structure;
 use external_multiple_structure;
 use external_value;
 use context_system;
+use aitoolsub_valuemapdoc\data_provider;
 
 class get_user_content_global extends external_api {
 
