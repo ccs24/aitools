@@ -6,6 +6,8 @@
     * data.total_valuemaps - Total value maps count
     * data.this_week.content - Documents created this week
     * data.this_week.entries - Value maps created this week
+    * data.this_week.content_progress_width - Progress bar width for content
+    * data.this_week.valuemaps_progress_width - Progress bar width for valuemaps
 }}
 
 <div class="quick-stats">
@@ -28,7 +30,7 @@
             </div>
             <div class="progress" style="height: 6px;">
                 <div class="progress-bar bg-primary" 
-                     style="width: {{#if data.this_week.content}}70{{else}}5{{/if}}%"></div>
+                     style="width: {{data.this_week.content_progress_width}}%"></div>
             </div>
         </div>
         
@@ -39,7 +41,7 @@
             </div>
             <div class="progress" style="height: 6px;">
                 <div class="progress-bar bg-success" 
-                     style="width: {{#if data.total_valuemaps}}60{{else}}5{{/if}}%"></div>
+                     style="width: {{data.this_week.valuemaps_progress_width}}%"></div>
             </div>
         </div>
     </div>

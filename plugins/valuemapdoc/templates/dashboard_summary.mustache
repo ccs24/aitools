@@ -5,6 +5,7 @@
     * data.content_count - Number of documents
     * data.entries_count - Number of value map entries
     * data.recent_content - Array of recent content
+    * data.has_recent_content - Boolean if recent content exists
 }}
 
 <div class="valuemap-summary">
@@ -23,7 +24,7 @@
         </div>
     </div>
     
-    {{#data.recent_content}}
+    {{#data.has_recent_content}}
         <div class="recent-activity">
             <h6 class="mb-2">
                 <i class="fa fa-clock me-1"></i>
@@ -32,27 +33,28 @@
             {{#data.recent_content}}
                 <div class="recent-item mb-2 p-2 bg-light rounded">
                     <div class="d-flex justify-content-between align-items-start">
+                        <a href="{{{view_url}}}" >
                         <div>
                             <small class="fw-bold">{{name}}</small>
                             <br>
-                            <small class="text-muted">{{timecreated}}</small>
+                            <small class="text-muted">{{timecreated_formatted}}</small>
                         </div>
-                        <a href="/mod/valuemapdoc/rate_content.php?id={{cmid}}&docid={{id}}" 
-                           class="btn btn-sm btn-outline-primary">
+                            <span class="btn btn-sm btn-outline-primary">
                             <i class="fa fa-eye"></i>
+                            </span>
                         </a>
                     </div>
                 </div>
             {{/data.recent_content}}
         </div>
-    {{/data.recent_content}}
+    {{/data.has_recent_content}}
     
-    {{^data.recent_content}}
+    {{^data.has_recent_content}}
         <div class="text-center text-muted">
             <i class="fa fa-file-text fa-2x mb-2"></i>
             <p class="small mb-0">{{#str}}no_recent_activity, aitoolsub_valuemapdoc{{/str}}</p>
         </div>
-    {{/data.recent_content}}
+    {{/data.has_recent_content}}
     
     <div class="mt-3">
         <a href="/local/aitools/plugins/valuemapdoc/my_content.php" class="btn btn-primary btn-sm w-100">

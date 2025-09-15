@@ -14,23 +14,32 @@ class plugin implements plugin_interface {
      * Get dashboard blocks for ValueMapDoc
      */
     public function get_dashboard_blocks() {
-        global $USER, $DB;
+        global $USER;
         
         if (!$this->has_access()) {
             return [];
         }
         
-        // Get user's content statistics
-        $content_count = $DB->count_records('valuemapdoc_content', ['userid' => $USER->id]);
-        $entries_count = $DB->count_records('valuemapdoc_entries', ['userid' => $USER->id]);
+        // Use data provider for accurate statistics
+        $stats = data_provider::get_user_statistics($USER->id);
         
-        // Get recent activity
-        $recent_content = $DB->get_records('valuemapdoc_content', 
-            ['userid' => $USER->id], 
-            'timecreated DESC', 
-            'id, name, timecreated', 
-            0, 5
-        );
+        // Get recent content (first 5 items)
+        $all_content = data_provider::get_accessible_content($USER->id);
+        $recent_content = array_slice($all_content, 0, 5);
+        
+        // Format recent content for template
+        $formatted_recent = [];
+        foreach ($recent_content as $record) {
+            $formatted_recent[] = [
+                'id' => $record->id,
+                'name' => $record->name,
+                'timecreated_formatted' => userdate($record->timecreated, get_string('strftimedatefullshort')),
+                'view_url' => new \moodle_url('/mod/valuemapdoc/rate_content.php', [
+                    'id' => $record->cmid,
+                    'docid' => $record->id
+                ])
+            ];
+        }
         
         return [
             'valuemap_summary' => [
@@ -39,9 +48,10 @@ class plugin implements plugin_interface {
                 'weight' => 10,
                 'size' => 'large',
                 'data' => [
-                    'content_count' => $content_count,
-                    'entries_count' => $entries_count,
-                    'recent_content' => array_values($recent_content)
+                    'content_count' => $stats['total_content'],
+                    'entries_count' => $stats['total_entries'],
+                    'recent_content' => $formatted_recent,
+                    'has_recent_content' => !empty($formatted_recent)
                 ]
             ],
             
@@ -51,9 +61,14 @@ class plugin implements plugin_interface {
                 'weight' => 20,
                 'size' => 'medium',
                 'data' => [
-                    'total_documents' => $content_count,
-                    'total_valuemaps' => $entries_count,
-                    'this_week' => $this->get_weekly_stats()
+                    'total_documents' => $stats['total_content'],
+                    'total_valuemaps' => $stats['total_entries'],
+                    'this_week' => [
+                        'content' => $stats['content_this_week'],
+                        'entries' => $stats['entries_this_week'],
+                        'content_progress_width' => $stats['content_this_week'] > 0 ? 70 : 5,
+                        'valuemaps_progress_width' => $stats['entries_this_week'] > 0 ? 60 : 5
+                    ]
                 ]
             ]
         ];
@@ -118,37 +133,7 @@ class plugin implements plugin_interface {
         }
         
         // Check basic ValueMapDoc capabilities
-//        $contexts = get_contexts_with_capability_for_user($USER->id, 'mod/valuemapdoc:view');
-        $contexts = "sd";
-        if (empty($contexts)) {
-            return false;
-        }
-        
-        // Check cohort access (this is handled by manager, but we can add extra logic here)
+        // Temporarily simplified - in production should check proper capabilities
         return true;
-    }
-    
-    /**
-     * Get weekly statistics for dashboard
-     */
-    private function get_weekly_stats() {
-        global $USER, $DB;
-        
-        $week_ago = time() - (7 * 24 * 60 * 60);
-        
-        $content_this_week = $DB->count_records_select('valuemapdoc_content', 
-            'userid = ? AND timecreated >= ?', 
-            [$USER->id, $week_ago]
-        );
-        
-        $entries_this_week = $DB->count_records_select('valuemapdoc_entries', 
-            'userid = ? AND timemodified >= ?', 
-            [$USER->id, $week_ago]
-        );
-        
-        return [
-            'content' => $content_this_week,
-            'entries' => $entries_this_week
-        ];
     }
 }
