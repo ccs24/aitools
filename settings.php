@@ -37,6 +37,15 @@ if ($hassiteconfig) {
     
     $ADMIN->add('localplugins', $subplugins_page);
     
+    // Add external page for cohort management (CRITICAL)
+    $cohort_management_page = new admin_externalpage(
+        'local_aitools_cohorts',
+        'Cohort Management',
+        new moodle_url('/local/aitools/admin/cohorts.php'),
+        'local/aitools:manage'
+    );
+    $ADMIN->add('local_aitools_subplugins', $cohort_management_page);
+    
     // Get installed subplugins and create settings pages
     try {
         $plugins = manager::get_plugins();

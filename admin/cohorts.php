@@ -4,7 +4,8 @@ require_once($CFG->libdir . '/adminlib.php');
 
 use local_aitools\cohort_manager;
 
-admin_externalpage_setup('local_aitools');
+// POPRAWKA: Używamy nazwy external page zdefiniowanej w settings.php
+admin_externalpage_setup('local_aitools_cohorts');
 
 $subplugin = required_param('subplugin', PARAM_COMPONENT);
 $action = optional_param('action', '', PARAM_ALPHA);
