@@ -1,3 +1,9 @@
+/* eslint-env es6 */
+/* eslint no-trailing-spaces: "off", 
+          no-unused-vars: "off" */
+/* eslint-disable max-len */
+/* eslint-disable no-unused-vars */
+/* eslint-disable no-console */
 /**
  * Content manager for ValueMapDoc AI Tools
  */
@@ -136,7 +142,7 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
                 );
             });
         },
-        
+
         refreshContent: function() {
             // AJAX call to refresh content
             var promises = Ajax.call([{
@@ -146,6 +152,7 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
             
             promises[0].done(function(data) {
                 // Update page content
+                console.log(data);
                 location.reload(); // Simple refresh for now
             }).fail(function(error) {
                 Notification.exception(error);

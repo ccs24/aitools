@@ -2,13 +2,13 @@
  * AI Tools Dashboard JavaScript
  */
 define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notification) {
-    
+
     return {
         init: function() {
             this.bindEvents();
             this.initializeBlocks();
         },
-        
+
         bindEvents: function() {
             // Tool card hover effects
             $('.tool-card').hover(
@@ -19,35 +19,35 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
                     $(this).removeClass('shadow-lg').css('transform', 'translateY(0)');
                 }
             );
-            
+
             // Dashboard block interactions
             $('.dashboard-block').on('click', '.refresh-block', this.refreshBlock.bind(this));
-            
+
             // Statistics animation
             this.animateStatistics();
         },
-        
+
         initializeBlocks: function() {
             // Initialize any interactive blocks
             $('.dashboard-block').each(function() {
                 var plugin = $(this).data('plugin');
-                var blockKey = $(this).data('block');
-                
+                //var blockKey = $(this).data('block');
+
                 // Plugin-specific initialization could go here
                 if (plugin === 'aitoolsub_valuemapdoc') {
                     // Initialize ValueMapDoc specific features
                 }
             });
         },
-        
+
         refreshBlock: function(event) {
             var block = $(event.target).closest('.dashboard-block');
             var plugin = block.data('plugin');
             var blockKey = block.data('block');
-            
+
             // Add loading state
             block.addClass('loading');
-            
+
             // Refresh block content via AJAX
             var promises = Ajax.call([{
                 methodname: 'local_aitools_refresh_block',
@@ -56,7 +56,7 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
                     block_key: blockKey
                 }
             }]);
-            
+
             promises[0].done(function(data) {
                 // Update block content
                 block.find('.card-body').html(data.content);
@@ -66,13 +66,13 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
                 block.removeClass('loading');
             });
         },
-        
+
         animateStatistics: function() {
             // Animate statistics cards on load
             $('.card h3').each(function() {
                 var $this = $(this);
                 var countTo = parseInt($this.text());
-                
+
                 $({ countNum: 0 }).animate({
                     countNum: countTo
                 }, {
