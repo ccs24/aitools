@@ -1,0 +1,495 @@
+/* ValueMapDoc Value Maps Dashboard Styles - Enhanced */
+
+.valuemapdoc-valuemaps-dashboard {
+    padding: 20px 0;
+}
+
+/* Header Styles */
+.valuemaps-header .breadcrumb {
+    background: none;
+    padding: 0;
+    margin-bottom: 1rem;
+}
+
+.valuemaps-header .breadcrumb-item a {
+    color: #007bff;
+    text-decoration: none;
+}
+
+.valuemaps-header .breadcrumb-item.active {
+    color: #6c757d;
+}
+
+/* Statistics Cards */
+.card {
+    border-radius: 12px;
+    border: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+}
+
+.card h3 {
+    font-size: 2.2rem;
+    font-weight: 700;
+}
+
+/* Fullscreen Support */
+.valuemapdoc-fullscreen {
+    overflow: hidden;
+}
+
+.valuemapdoc-fullscreen .valuemapdoc-valuemaps-dashboard {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: white;
+    z-index: 9999;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.valuemapdoc-fullscreen #valuemaps-table {
+    height: calc(100vh - 400px) !important;
+}
+
+.valuemapdoc-fullscreen .card {
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* Tabulator Custom Styles */
+#valuemaps-table {
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.tabulator {
+    border: none;
+    font-size: 14px;
+}
+
+.tabulator-header {
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    border-bottom: 2px solid #dee2e6;
+}
+
+.tabulator-header .tabulator-col {
+    background: transparent;
+    border-right: 1px solid #dee2e6;
+}
+
+.tabulator-header .tabulator-col-title {
+    font-weight: 600;
+    color: #495057;
+    font-size: 13px;
+}
+
+.tabulator-row {
+    border-bottom: 1px solid #f1f3f4;
+    transition: background-color 0.2s ease;
+}
+
+.tabulator-row:hover {
+    background-color: #f8f9fa;
+    cursor: pointer;
+}
+
+.tabulator-row.tabulator-selected {
+    background-color: #e3f2fd;
+}
+
+/* Special row styling for master entries (if applicable) */
+.tabulator-row.ismaster {
+    background-color: #eaffea;
+    font-weight: 500;
+}
+
+.tabulator-row.ismaster:hover {
+    background-color: #d4f4d4;
+}
+
+.tabulator-cell {
+    border-right: 1px solid #f1f3f4;
+    padding: 12px 8px;
+    vertical-align: middle;
+}
+
+/* Custom cell styles */
+.tabulator-cell .badge {
+    font-size: 0.75rem;
+    padding: 0.4em 0.6em;
+    border-radius: 12px;
+    font-weight: 500;
+}
+
+.tabulator-cell .btn-group-sm .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.8rem;
+    border-radius: 4px;
+    margin-right: 2px;
+}
+
+.tabulator-cell .btn-group-sm .btn:last-child {
+    margin-right: 0;
+}
+
+/* Action buttons styling */
+.tabulator-cell .btn-group .btn {
+    transition: all 0.2s ease;
+}
+
+.tabulator-cell .btn-group .btn:hover {
+    transform: translateY(-1px);
+}
+
+/* Loading overlay */
+#loading-overlay {
+    min-height: 400px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Empty and error states */
+#empty-state, #error-state {
+    min-height: 400px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+#empty-state .fa-sitemap,
+#error-state .fa-exclamation-triangle {
+    opacity: 0.5;
+}
+
+/* Info Alert */
+.alert-info {
+    background-color: #e8f4f8;
+    border-color: #b8daed;
+    color: #31708f;
+}
+
+/* Filter panel */
+.card-header {
+    background: linear-gradient(135deg, #f8f9fa, #ffffff);
+    border-bottom: 1px solid #dee2e6;
+}
+
+/* Tabulator pagination */
+.tabulator-footer {
+    background: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+    padding: 10px;
+}
+
+.tabulator-paginator {
+    color: #6c757d;
+}
+
+.tabulator-page {
+    display: inline-block;
+    margin: 0 3px;
+    padding: 6px 12px;
+    background: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    color: #007bff;
+    text-decoration: none;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.tabulator-page:hover {
+    background: #e9ecef;
+    border-color: #adb5bd;
+}
+
+.tabulator-page.active {
+    background: #007bff;
+    color: white;
+    border-color: #007bff;
+}
+
+.tabulator-page.disabled {
+    color: #6c757d;
+    background: #f8f9fa;
+    border-color: #dee2e6;
+    cursor: not-allowed;
+}
+
+/* Column visibility modal */
+.modal-body .form-check {
+    margin-bottom: 0.5rem;
+}
+
+.modal-body .form-check-input {
+    margin-top: 0.25rem;
+}
+
+/* Table controls in header */
+.table-controls .btn {
+    margin-left: 0.5rem;
+}
+
+/* Custom scrollbar for table */
+.tabulator-tableholder::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.tabulator-tableholder::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.tabulator-tableholder::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+
+.tabulator-tableholder::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* Filter input styling */
+.tabulator-header-filter input {
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 12px;
+    width: 100%;
+}
+
+.tabulator-header-filter input:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    outline: none;
+}
+
+.tabulator-header-filter select {
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 12px;
+    width: 100%;
+    background: white;
+}
+
+/* Help section styling */
+.card ul.small {
+    margin-bottom: 0;
+}
+
+.card ul.small li {
+    margin-bottom: 0.25rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .valuemaps-header .col-md-4 {
+        text-align: center !important;
+        margin-top: 1rem;
+    }
+    
+    .card h3 {
+        font-size: 1.8rem;
+    }
+    
+    .btn-group {
+        display: flex;
+        width: 100%;
+    }
+    
+    .btn-group .btn {
+        flex: 1;
+    }
+    
+    /* Make table responsive */
+    .tabulator-cell {
+        padding: 8px 4px;
+        font-size: 13px;
+    }
+    
+    .tabulator-cell .btn-group-sm .btn {
+        padding: 0.2rem 0.4rem;
+        font-size: 0.75rem;
+    }
+    
+    /* Fullscreen adjustments for mobile */
+    .valuemapdoc-fullscreen .valuemapdoc-valuemaps-dashboard {
+        padding: 10px;
+    }
+    
+    .valuemapdoc-fullscreen #valuemaps-table {
+        height: calc(100vh - 300px) !important;
+    }
+}
+
+@media (max-width: 576px) {
+    .valuemapdoc-valuemaps-dashboard {
+        padding: 10px 0;
+    }
+    
+    .card-header {
+        padding: 0.75rem 1rem;
+    }
+    
+    .card-body {
+        padding: 1rem;
+    }
+    
+    /* Stack filter controls vertically on mobile */
+    .row > .col-md-3 {
+        margin-bottom: 1rem;
+    }
+    
+    /* Adjust table for mobile */
+    .tabulator {
+        font-size: 12px;
+    }
+    
+    #valuemaps-table {
+        height: 400px !important;
+    }
+    
+    .tabulator-header .tabulator-col-title {
+        font-size: 12px;
+    }
+}
+
+/* Animation for data updates */
+.tabulator-row.tabulator-row-added {
+    background-color: #d4edda;
+    animation: rowAdded 2s ease-out;
+}
+
+@keyframes rowAdded {
+    from { background-color: #d4edda; }
+    to { background-color: transparent; }
+}
+
+/* Loading spinner in statistics */
+.fa-spinner {
+    animation: fa-spin 1s infinite linear;
+}
+
+@keyframes fa-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Highlight search results */
+.tabulator-cell .highlight {
+    background-color: yellow;
+    font-weight: bold;
+}
+
+/* Entry details modal enhancements */
+.modal-lg .modal-body .row {
+    margin-bottom: 1rem;
+}
+
+.modal-lg .modal-body .row:last-child {
+    margin-bottom: 0;
+}
+
+/* Button hover effects */
+.btn {
+    transition: all 0.2s ease;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+}
+
+/* Badge hover effects in table */
+.tabulator-cell .badge {
+    transition: all 0.2s ease;
+}
+
+.tabulator-cell .badge:hover {
+    transform: scale(1.05);
+}row.tabulator-row-added {
+    background-color: #d4edda;
+    animation: rowAdded 2s ease-out;
+}
+
+@keyframes rowAdded {
+    from { background-color: #d4edda; }
+    to { background-color: transparent; }
+}
+
+/* Loading spinner in statistics */
+.fa-spinner {
+    animation: fa-spin 1s infinite linear;
+}
+
+@keyframes fa-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Highlight search results */
+.tabulator-cell .highlight {
+    background-color: yellow;
+    font-weight: bold;
+}
+
+/* Entry details modal enhancements */
+.modal-lg .modal-body .row {
+    margin-bottom: 1rem;
+}
+
+.modal-lg .modal-body .row:last-child {
+    margin-bottom: 0;
+}
+
+/* Button hover effects */
+.btn {
+    transition: all 0.2s ease;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+}
+
+/* Badge hover effects in table */
+.tabulator-cell .badge {
+    transition: all 0.2s ease;
+}
+
+.tabulator-cell .badge:hover {
+    transform: scale(1.05);
+}row.tabulator-row-added {
+    background-color: #d4edda;
+    animation: rowAdded 2s ease-out;
+}
+
+@keyframes rowAdded {
+    from { background-color: #d4edda; }
+    to { background-color: transparent; }
+}
+
+/* Loading spinner in statistics */
+.fa-spinner {
+    animation: fa-spin 1s infinite linear;
+}
+
+@keyframes fa-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Highlight search results */
+.tabulator-cell .highlight {
+    background-color: yellow;
+    font-weight: bold;
+}

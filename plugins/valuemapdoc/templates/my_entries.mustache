@@ -1,0 +1,93 @@
+{{!
+    Template for ValueMapDoc Global Viewer
+    @template local_valuemapdoc_viewer/viewer
+}}
+
+<div class="valuemapdoc-global-viewer">
+    <div class="row mb-3">
+        <div class="col-12">
+            <h3>{{title}}</h3>
+            <p class="text-muted">{{description}}</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div id="viewer-status" class="alert alert-info" style="display: none;">
+                <div id="loading-message">
+                    <i class="fa fa-spinner fa-spin"></i> {{loading_message}}
+                </div>
+                <div id="error-message" style="display: none;">
+                    <i class="fa fa-exclamation-triangle"></i> {{error_message}}
+                </div>
+                <div id="no-entries-message" style="display: none;">
+                    <i class="fa fa-info-circle"></i> {{no_entries_message}}
+                </div>
+            </div>
+
+            <div id="viewer-table-container" style="display: none;">
+                <div id="viewer-table" class="valuemapdoc-table-readonly">
+                    <!-- Tabulator table will be rendered here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden data for JavaScript -->
+<script type="application/json" id="viewer-columns">{{{columns}}}</script>
+
+<style>
+/* Separator row styling */
+.tabulator .tabulator-row.separator-row {
+    background-color: #f8f9fa !important;
+    font-weight: bold;
+    border-top: 2px solid #dee2e6;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.tabulator .tabulator-row.separator-row .tabulator-cell {
+    background-color: #f8f9fa !important;
+    color: #495057;
+    font-style: italic;
+}
+
+/* Readonly table styling */
+.valuemapdoc-table-readonly .tabulator-cell {
+    cursor: default !important;
+}
+
+.valuemapdoc-table-readonly .tabulator-row:hover {
+    background-color: #f8f9fa !important;
+}
+
+/* Ensure table takes full width */
+#viewer-table {
+    width: 100%;
+    min-height: 400px;
+}
+
+.tabulator {
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+}
+
+.tabulator-header {
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.tabulator-col-title {
+    font-weight: 600;
+    color: #495057;
+}
+
+/* Loading and status styling */
+#viewer-status {
+    margin-bottom: 1rem;
+}
+
+#viewer-status i {
+    margin-right: 0.5rem;
+}
+</style>

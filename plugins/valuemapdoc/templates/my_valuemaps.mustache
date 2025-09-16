@@ -1,0 +1,309 @@
+{{!
+    Enhanced My Value Maps Template inspired by module's approach
+}}
+
+<div class="valuemapdoc-valuemaps-dashboard">
+    <!-- Header -->
+    <div class="valuemaps-header mb-4">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item">
+                            <a href="{{{back_url}}}">
+                                <i class="fa fa-robot"></i> {{#str}}aitools, local_aitools{{/str}}
+                            </a>
+                        </li>
+                        <li class="breadcrumb-item active">{{#str}}my_valuemaps, aitoolsub_valuemapdoc{{/str}}</li>
+                    </ol>
+                </nav>
+                
+                <h1 class="h2 mb-2">
+                    <i class="fa fa-sitemap text-primary me-2"></i>
+                    {{#str}}my_valuemaps_dashboard, aitoolsub_valuemapdoc{{/str}}
+                </h1>
+                <p class="text-muted mb-0">
+                    {{#str}}valuemaps_dashboard_subtitle, aitoolsub_valuemapdoc{{/str}}
+                </p>
+            </div>
+            <div class="col-md-4 text-end">
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-outline-primary" id="refresh-data">
+                        <i class="fa fa-refresh"></i> {{#str}}refresh, core{{/str}}
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" id="toggle-fullscreen">
+                        <i class="fa fa-expand"></i> {{#str}}fullscreen, aitoolsub_valuemapdoc{{/str}}
+                    </button>
+                    <button type="button" class="btn btn-outline-info" id="export-data">
+                        <i class="fa fa-download"></i> {{#str}}export, aitoolsub_valuemapdoc{{/str}}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card bg-primary text-white">
+                <div class="card-body text-center">
+                    <h3 class="mb-1" id="stat-total-entries">
+                        {{#statistics.loading}}<i class="fa fa-spinner fa-spin"></i>{{/statistics.loading}}
+                        {{^statistics.loading}}{{statistics.total_entries}}{{/statistics.loading}}
+                    </h3>
+                    <small>{{#str}}total_entries, aitoolsub_valuemapdoc{{/str}}</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-success text-white">
+                <div class="card-body text-center">
+                    <h3 class="mb-1" id="stat-unique-courses">
+                        {{#statistics.loading}}<i class="fa fa-spinner fa-spin"></i>{{/statistics.loading}}
+                        {{^statistics.loading}}{{statistics.unique_courses}}{{/statistics.loading}}
+                    </h3>
+                    <small>{{#str}}courses_with_entries, aitoolsub_valuemapdoc{{/str}}</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-info text-white">
+                <div class="card-body text-center">
+                    <h3 class="mb-1" id="stat-unique-activities">
+                        {{#statistics.loading}}<i class="fa fa-spinner fa-spin"></i>{{/statistics.loading}}
+                        {{^statistics.loading}}{{statistics.unique_activities}}{{/statistics.loading}}
+                    </h3>
+                    <small>{{#str}}activities_with_entries, aitoolsub_valuemapdoc{{/str}}</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Info Alert -->
+    <div class="alert alert-info mb-4">
+        <div class="d-flex align-items-start">
+            <i class="fa fa-info-circle fa-lg me-3 mt-1"></i>
+            <div>
+                <strong>{{#str}}view_only_mode, aitoolsub_valuemapdoc{{/str}}</strong>
+                <p class="mb-0 mt-1">
+                    {{#str}}view_only_description, aitoolsub_valuemapdoc{{/str}}
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters Panel -->
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="fa fa-filter me-2"></i>
+                {{#str}}filter_options, aitoolsub_valuemapdoc{{/str}}
+            </h5>
+            <div>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="clear-filters">
+                    <i class="fa fa-times me-1"></i>
+                    {{#str}}clear_filters, aitoolsub_valuemapdoc{{/str}}
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3">
+                    <label class="form-label small">{{#str}}course, core{{/str}}</label>
+                    <select class="form-select form-select-sm" id="filter-course">
+                        <option value="">{{#str}}all_courses, aitoolsub_valuemapdoc{{/str}}</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small">{{#str}}activity, core{{/str}}</label>
+                    <select class="form-select form-select-sm" id="filter-activity">
+                        <option value="">{{#str}}all_activities, aitoolsub_valuemapdoc{{/str}}</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small">{{#str}}entry_type, aitoolsub_valuemapdoc{{/str}}</label>
+                    <select class="form-select form-select-sm" id="filter-type">
+                        <option value="">{{#str}}all_types, aitoolsub_valuemapdoc{{/str}}</option>
+                        <option value="customer_profile">{{#str}}customer_profile, aitoolsub_valuemapdoc{{/str}}</option>
+                        <option value="value_proposition">{{#str}}value_proposition, aitoolsub_valuemapdoc{{/str}}</option>
+                        <option value="pain_analysis">{{#str}}pain_analysis, aitoolsub_valuemapdoc{{/str}}</option>
+                        <option value="value_map">{{#str}}value_map, aitoolsub_valuemapdoc{{/str}}</option>
+                        <option value="general">{{#str}}general, aitoolsub_valuemapdoc{{/str}}</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small">{{#str}}search, aitoolsub_valuemapdoc{{/str}}</label>
+                    <input type="text" class="form-control form-control-sm" id="search-entries" 
+                           placeholder="{{#str}}search_entries_placeholder, aitoolsub_valuemapdoc{{/str}}">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Table Container -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="fa fa-table me-2"></i>
+                {{#str}}value_map_entries, aitoolsub_valuemapdoc{{/str}}
+            </h5>
+            <div class="table-controls">
+                <button type="button" class="btn btn-sm btn-outline-primary" id="toggle-columns">
+                    <i class="fa fa-columns"></i> {{#str}}columns, aitoolsub_valuemapdoc{{/str}}
+                </button>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <!-- Loading overlay -->
+            <div id="loading-overlay" class="position-relative">
+                <div class="text-center py-5">
+                    <i class="fa fa-spinner fa-spin fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">{{#str}}loading_entries, aitoolsub_valuemapdoc{{/str}}</h5>
+                    <p class="text-muted">{{#str}}please_wait, aitoolsub_valuemapdoc{{/str}}</p>
+                </div>
+            </div>
+            
+            <!-- Tabulator table container -->
+            <div id="valuemaps-table" style="display: none;"></div>
+            
+            <!-- Empty state -->
+            <div id="empty-state" class="text-center py-5" style="display: none;">
+                <i class="fa fa-sitemap fa-4x text-muted mb-3"></i>
+                <h3>{{#str}}no_entries_yet, aitoolsub_valuemapdoc{{/str}}</h3>
+                <p class="text-muted mb-4">{{#str}}no_entries_description, aitoolsub_valuemapdoc{{/str}}</p>
+                <a href="/course/" class="btn btn-primary">
+                    <i class="fa fa-plus me-2"></i>
+                    {{#str}}browse_courses, aitoolsub_valuemapdoc{{/str}}
+                </a>
+            </div>
+            
+            <!-- Error state -->
+            <div id="error-state" class="text-center py-5" style="display: none;">
+                <i class="fa fa-exclamation-triangle fa-4x text-warning mb-3"></i>
+                <h3>{{#str}}error_loading_entries, aitoolsub_valuemapdoc{{/str}}</h3>
+                <p class="text-muted mb-4" id="error-message"></p>
+                <button type="button" class="btn btn-primary" id="retry-loading">
+                    <i class="fa fa-refresh me-2"></i>
+                    {{#str}}try_again, aitoolsub_valuemapdoc{{/str}}
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Column Visibility Modal -->
+    <div class="modal fade" id="columnModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">{{#str}}column_visibility, aitoolsub_valuemapdoc{{/str}}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="column-checkboxes">
+                        <!-- Dynamically populated -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{#str}}close, aitoolsub_valuemapdoc{{/str}}</button>
+                    <button type="button" class="btn btn-primary" id="apply-columns">{{#str}}apply, aitoolsub_valuemapdoc{{/str}}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Help Section -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fa fa-question-circle me-2"></i>
+                {{#str}}help_and_tips, aitoolsub_valuemapdoc{{/str}}
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>{{#str}}navigation_tips, aitoolsub_valuemapdoc{{/str}}</h6>
+                    <ul class="small">
+                        <li>{{#str}}tip_double_click, aitoolsub_valuemapdoc{{/str}}</li>
+                        <li>{{#str}}tip_column_filters, aitoolsub_valuemapdoc{{/str}}</li>
+                        <li>{{#str}}tip_fullscreen, aitoolsub_valuemapdoc{{/str}}</li>
+                        <li>{{#str}}tip_export, aitoolsub_valuemapdoc{{/str}}</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h6>{{#str}}entry_types_help, aitoolsub_valuemapdoc{{/str}}</h6>
+                    <ul class="small">
+                        <li><span class="badge bg-primary me-1">{{#str}}customer_profile, aitoolsub_valuemapdoc{{/str}}</span> - {{#str}}customer_profile_desc, aitoolsub_valuemapdoc{{/str}}</li>
+                        <li><span class="badge bg-success me-1">{{#str}}value_proposition, aitoolsub_valuemapdoc{{/str}}</span> - {{#str}}value_proposition_desc, aitoolsub_valuemapdoc{{/str}}</li>
+                        <li><span class="badge bg-warning me-1">{{#str}}pain_analysis, aitoolsub_valuemapdoc{{/str}}</span> - {{#str}}pain_analysis_desc, aitoolsub_valuemapdoc{{/str}}</li>
+                        <li><span class="badge bg-info me-1">{{#str}}value_map, aitoolsub_valuemapdoc{{/str}}</span> - {{#str}}value_map_desc, aitoolsub_valuemapdoc{{/str}}</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Pass data to JavaScript -->
+<script>
+window.valuemapsConfig = {
+    ajaxUrl: '{{{ajax_url}}}',
+    sesskey: '{{sesskey}}',
+    userid: {{userid}},
+    strings: {
+        id: '{{#str}}id, aitoolsub_valuemapdoc{{/str}}',
+        course: '{{#str}}course, core{{/str}}',
+        activity: '{{#str}}activity, core{{/str}}',
+        entry_type: '{{#str}}entry_type, aitoolsub_valuemapdoc{{/str}}',
+        preview: '{{#str}}preview, aitoolsub_valuemapdoc{{/str}}',
+        created: '{{#str}}created, aitoolsub_valuemapdoc{{/str}}',
+        modified: '{{#str}}modified, aitoolsub_valuemapdoc{{/str}}',
+        actions: '{{#str}}actions, aitoolsub_valuemapdoc{{/str}}',
+        view: '{{#str}}view, core{{/str}}',
+        edit: '{{#str}}edit, core{{/str}}',
+        loading: '{{#str}}loading, core{{/str}}',
+        no_data: '{{#str}}no_entries_yet, aitoolsub_valuemapdoc{{/str}}',
+        error: '{{#str}}error, core{{/str}}',
+        export_csv: '{{#str}}export_csv, aitoolsub_valuemapdoc{{/str}}',
+        export_json: '{{#str}}export_json, aitoolsub_valuemapdoc{{/str}}'
+    }
+};
+</script>
+
+{{#js}}
+require(['jquery'], function($) {
+    $(document).ready(function() {
+        // Initialize tooltips and other Bootstrap components
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+        
+        // Add fullscreen CSS when needed
+        if (!document.getElementById('fullscreen-css')) {
+            var style = document.createElement('style');
+            style.id = 'fullscreen-css';
+            style.textContent = `
+                .valuemapdoc-fullscreen {
+                    overflow: hidden;
+                }
+                .valuemapdoc-fullscreen .valuemapdoc-valuemaps-dashboard {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100vw;
+                    height: 100vh;
+                    background: white;
+                    z-index: 9999;
+                    padding: 20px;
+                    overflow-y: auto;
+                }
+                .valuemapdoc-fullscreen #valuemaps-table {
+                    height: calc(100vh - 400px) !important;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+    });
+});
+{{/js}}
