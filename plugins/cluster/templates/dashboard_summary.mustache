@@ -1,0 +1,181 @@
+{{!
+    Template for cluster dashboard summary block
+    Context: cluster summary data from plugin->get_cluster_summary()
+}}
+<div class="cluster-dashboard-summary">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="cluster-stats">
+                <h6><i class="fa fa-bullseye"></i> Cluster Overview</h6>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <span class="stat-number text-primary">{{total_clusters}}</span>
+                        <span class="stat-label">Total Clusters</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number text-success">{{active_clusters}}</span>
+                        <span class="stat-label">Active</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number text-warning">{{planning_clusters}}</span>
+                        <span class="stat-label">Planning</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number text-info">{{completed_clusters}}</span>
+                        <span class="stat-label">Completed</span>
+                    </div>
+                </div>
+                
+                <div class="progress-summary mt-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-muted">
+                            <i class="fa fa-building"></i> {{total_companies}} companies
+                        </small>
+                        <small class="text-muted">
+                            <i class="fa fa-users"></i> {{total_persons}} contacts
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="recent-clusters">
+                <h6><i class="fa fa-clock-o"></i> Recent Clusters</h6>
+                {{#recent_clusters}}
+                <div class="cluster-item mb-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>{{name}}</strong>
+                            <br><small class="text-muted">
+                                <span class="badge badge-{{#status}}{{#planning}}secondary{{/planning}}{{#active}}success{{/active}}{{#paused}}warning{{/paused}}{{#completed}}info{{/completed}}{{/status}}">
+                                    {{status}}
+                                </span>
+                            </small>
+                        </div>
+                        <div class="text-end">
+                            <small class="text-muted">
+                                {{#modified_date}}
+                                    <time data-timestamp="{{modified_date}}">
+                                        {{modified_date}}
+                                    </time>
+                                {{/modified_date}}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+                {{/recent_clusters}}
+                {{^recent_clusters}}
+                <div class="text-center text-muted py-3">
+                    <i class="fa fa-info-circle"></i>
+                    <p class="mb-0">No clusters yet</p>
+                    <small>Create your first cluster to get started</small>
+                </div>
+                {{/recent_clusters}}
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-3">
+        <div class="col-12">
+            <div class="cluster-actions text-center">
+                <a href="/local/aitools/plugins/cluster/index.php" class="btn btn-primary btn-sm">
+                    <i class="fa fa-bullseye"></i> Manage Clusters
+                </a>
+                <a href="/local/aitools/plugins/cluster/companies.php" class="btn btn-outline-primary btn-sm">
+                    <i class="fa fa-building"></i> Company Research
+                </a>
+                <a href="/local/aitools/plugins/cluster/messages.php" class="btn btn-outline-primary btn-sm">
+                    <i class="fa fa-comments"></i> AI Messages
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.cluster-dashboard-summary {
+    padding: 15px;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.stat-number {
+    display: block;
+    font-size: 1.5em;
+    font-weight: bold;
+}
+
+.stat-label {
+    display: block;
+    font-size: 0.85em;
+    color: #6c757d;
+    margin-top: 2px;
+}
+
+.cluster-item {
+    padding: 8px 12px;
+    background: #ffffff;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.cluster-item:hover {
+    background: #f8f9fa;
+    border-color: #0d6efd;
+}
+
+.cluster-actions .btn {
+    margin: 0 5px;
+}
+
+.badge {
+    font-size: 0.7em;
+    padding: 3px 6px;
+}
+
+.badge-secondary { background-color: #6c757d; }
+.badge-success { background-color: #198754; }
+.badge-warning { background-color: #ffc107; color: #212529; }
+.badge-info { background-color: #0dcaf0; color: #212529; }
+
+@media (max-width: 768px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+    
+    .cluster-actions .btn {
+        display: block;
+        margin: 5px 0;
+        width: 100%;
+    }
+}
+</style>
+
+<script>
+// Format timestamps on load
+document.addEventListener('DOMContentLoaded', function() {
+    const timeElements = document.querySelectorAll('[data-timestamp]');
+    timeElements.forEach(function(element) {
+        const timestamp = parseInt(element.getAttribute('data-timestamp'));
+        if (timestamp) {
+            const date = new Date(timestamp * 1000);
+            element.textContent = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        }
+    });
+});
+</script>

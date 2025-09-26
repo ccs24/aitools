@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="local/aitools/plugins/cluster/db" VERSION="20250926" COMMENT="XMLDB file for aitoolsub_cluster plugin"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="../../../../lib/xmldb/xmldb.xsd"
+>
+  <TABLES>
+    <!-- Główna tabela klastrów (strategiczne kampanie sprzedażowe) -->
+    <TABLE NAME="aitools_clusters" COMMENT="Strategic sales campaigns/clusters">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="name" TYPE="char" LENGTH="255" NOTNULL="true" COMMENT="Cluster name"/>
+        <FIELD NAME="market" TYPE="char" LENGTH="255" NOTNULL="false" COMMENT="Market from valuemapdoc (can be overridden)"/>
+        <FIELD NAME="description" TYPE="text" NOTNULL="false" COMMENT="Cluster description"/>
+        <FIELD NAME="status" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="planning" COMMENT="planning, active, paused, completed"/>
+        <FIELD NAME="created_by" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="User who created the cluster"/>
+        <FIELD NAME="created_date" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="Creation timestamp"/>
+        <FIELD NAME="modified_date" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="Last modification timestamp"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="created_by" TYPE="foreign" FIELDS="created_by" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="status" UNIQUE="false" FIELDS="status"/>
+        <INDEX NAME="market" UNIQUE="false" FIELDS="market"/>
+        <INDEX NAME="created_by_status" UNIQUE="false" FIELDS="created_by, status"/>
+      </INDEXES>
+    </TABLE>
+
+    <!-- Firmy w klastrach -->
+    <TABLE NAME="aitools_cluster_companies" COMMENT="Companies within sales clusters">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="cluster_id" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="Reference to aitools_clusters"/>
+        <FIELD NAME="name" TYPE="char" LENGTH="255" NOTNULL="true" COMMENT="Company name"/>
+        <FIELD NAME="industry" TYPE="char" LENGTH="255" NOTNULL="false" COMMENT="Industry from valuemapdoc (can be overridden)"/>
+        <FIELD NAME="linkedin_url" TYPE="char" LENGTH="500" NOTNULL="false" COMMENT="LinkedIn company page"/>
+        <FIELD NAME="website" TYPE="char" LENGTH="500" NOTNULL="false" COMMENT="Company website"/>
+        <FIELD NAME="description" TYPE="text" NOTNULL="false" COMMENT="Company description and notes"/>
+        <FIELD NAME="created_by" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="User who added the company"/>
+        <FIELD NAME="added_date" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="Date when company was added"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="cluster_id" TYPE="foreign" FIELDS="cluster_id" REFTABLE="aitools_clusters" REFFIELDS="id"/>
+        <KEY NAME="created_by" TYPE="foreign" FIELDS="created_by" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="cluster_id" UNIQUE="false" FIELDS="cluster_id"/>
+        <INDEX NAME="industry" UNIQUE="false" FIELDS="industry"/>
+        <INDEX NAME="cluster_industry" UNIQUE="false" FIELDS="cluster_id, industry"/>
+      </INDEXES>
+    </TABLE>
+
+    <!-- Osoby w firmach -->
+    <TABLE NAME="aitools_cluster_persons" COMMENT="Persons within companies in clusters">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="company_id" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="Reference to aitools_cluster_companies"/>
+        <FIELD NAME="full_name" TYPE="char" LENGTH="255" NOTNULL="true" COMMENT="Person full name"/>
+        <FIELD NAME="email" TYPE="char" LENGTH="255" NOTNULL="false" COMMENT="Person email address"/>
+        <FIELD NAME="role" TYPE="char" LENGTH="255" NOTNULL="false" COMMENT="Role from valuemapdoc (can be overridden)"/>
+        <FIELD NAME="linkedin_url" TYPE="char" LENGTH="500" NOTNULL="false" COMMENT="LinkedIn profile"/>
+        <FIELD NAME="description" TYPE="text" NOTNULL="false" COMMENT="Person description and notes"/>
+        <FIELD NAME="created_by" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="User who added the person"/>
+        <FIELD NAME="created_date" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="Creation timestamp"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="company_id" TYPE="foreign" FIELDS="company_id" REFTABLE="aitools_cluster_companies" REFFIELDS="id"/>
+        <KEY NAME="created_by" TYPE="foreign" FIELDS="created_by" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="company_id" UNIQUE="false" FIELDS="company_id"/>
+        <INDEX NAME="role" UNIQUE="false" FIELDS="role"/>
+        <INDEX NAME="email" UNIQUE="false" FIELDS="email"/>
+      </INDEXES>
+    </TABLE>
+
+    <!-- Komunikaty dla person (AI-generated messages) -->
+    <TABLE NAME="aitools_cluster_messages" COMMENT="Sales messages for cluster targeting">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="cluster_id" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="Reference to aitools_clusters"/>
+        <FIELD NAME="title" TYPE="char" LENGTH="255" NOTNULL="true" COMMENT="Message title"/>
+        <FIELD NAME="content" TYPE="text" NOTNULL="true" COMMENT="Message content"/>
+        <FIELD NAME="target_persona" TYPE="char" LENGTH="255" NOTNULL="false" COMMENT="Target role/persona"/>
+        <FIELD NAME="channel" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="email" COMMENT="email, linkedin, phone"/>
+        <FIELD NAME="priority" TYPE="char" LENGTH="10" NOTNULL="true" DEFAULT="medium" COMMENT="low, medium, high"/>
+        <FIELD NAME="effectiveness_score" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" COMMENT="1-5 rating by salesperson"/>
+        <FIELD NAME="usage_count" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" COMMENT="How many times used"/>
+        <FIELD NAME="success_count" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" COMMENT="How many successful responses"/>
+        <FIELD NAME="valuemapdoc_context" TYPE="text" NOTNULL="false" COMMENT="JSON with valuemapdoc data used for generation"/>
+        <FIELD NAME="created_by" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="User who created the message"/>
+        <FIELD NAME="created_date" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="Creation timestamp"/>
+        <FIELD NAME="last_used" TYPE="int" LENGTH="10" NOTNULL="false" COMMENT="Last usage timestamp"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="cluster_id" TYPE="foreign" FIELDS="cluster_id" REFTABLE="aitools_clusters" REFFIELDS="id"/>
+        <KEY NAME="created_by" TYPE="foreign" FIELDS="created_by" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="cluster_id" UNIQUE="false" FIELDS="cluster_id"/>
+        <INDEX NAME="target_persona" UNIQUE="false" FIELDS="target_persona"/>
+        <INDEX NAME="channel" UNIQUE="false" FIELDS="channel"/>
+        <INDEX NAME="effectiveness_score" UNIQUE="false" FIELDS="effectiveness_score"/>
+        <INDEX NAME="cluster_persona" UNIQUE="false" FIELDS="cluster_id, target_persona"/>
+      </INDEXES>
+    </TABLE>
+
+    <!-- Raporty research (AI-generated lub manualne) -->
+    <TABLE NAME="aitools_research_reports" COMMENT="Research reports for companies, persons, or markets">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="content" TYPE="text" NOTNULL="true" COMMENT="Report content (JSON format)"/>
+        <FIELD NAME="company_id" TYPE="int" LENGTH="10" NOTNULL="false" COMMENT="Reference to aitools_cluster_companies (optional)"/>
+        <FIELD NAME="person_id" TYPE="int" LENGTH="10" NOTNULL="false" COMMENT="Reference to aitools_cluster_persons (optional)"/>
+        <FIELD NAME="cluster_id" TYPE="int" LENGTH="10" NOTNULL="false" COMMENT="Reference to aitools_clusters for market reports"/>
+        <FIELD NAME="type" TYPE="char" LENGTH="20" NOTNULL="true" COMMENT="company, person, market"/>
+        <FIELD NAME="generated_date" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="Generation timestamp"/>
+        <FIELD NAME="generated_by" TYPE="char" LENGTH="10" NOTNULL="true" DEFAULT="manual" COMMENT="AI, manual"/>
+        <FIELD NAME="created_by" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="User who requested the report"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="company_id" TYPE="foreign" FIELDS="company_id" REFTABLE="aitools_cluster_companies" REFFIELDS="id"/>
+        <KEY NAME="person_id" TYPE="foreign" FIELDS="person_id" REFTABLE="aitools_cluster_persons" REFFIELDS="id"/>
+        <KEY NAME="cluster_id" TYPE="foreign" FIELDS="cluster_id" REFTABLE="aitools_clusters" REFFIELDS="id"/>
+        <KEY NAME="created_by" TYPE="foreign" FIELDS="created_by" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="type" UNIQUE="false" FIELDS="type"/>
+        <INDEX NAME="generated_by" UNIQUE="false" FIELDS="generated_by"/>
+        <INDEX NAME="company_id" UNIQUE="false" FIELDS="company_id"/>
+        <INDEX NAME="person_id" UNIQUE="false" FIELDS="person_id"/>
+        <INDEX NAME="cluster_id" UNIQUE="false" FIELDS="cluster_id"/>
+      </INDEXES>
+    </TABLE>
+
+    <!-- Team hierarchy (manager/coworker relationships) -->
+    <TABLE NAME="aitools_team_hierarchy" COMMENT="Team hierarchy for access management">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="manager_id" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="Manager user ID"/>
+        <FIELD NAME="employee_id" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="Employee user ID"/>
+        <FIELD NAME="department" TYPE="char" LENGTH="255" NOTNULL="false" COMMENT="Department name (optional)"/>
+        <FIELD NAME="granted_by" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="User who granted this relationship"/>
+        <FIELD NAME="granted_date" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="Grant timestamp"/>
+        <FIELD NAME="is_active" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" COMMENT="1=active, 0=inactive"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="manager_id" TYPE="foreign" FIELDS="manager_id" REFTABLE="user" REFFIELDS="id"/>
+        <KEY NAME="employee_id" TYPE="foreign" FIELDS="employee_id" REFTABLE="user" REFFIELDS="id"/>
+        <KEY NAME="granted_by" TYPE="foreign" FIELDS="granted_by" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="manager_id" UNIQUE="false" FIELDS="manager_id"/>
+        <INDEX NAME="employee_id" UNIQUE="false" FIELDS="employee_id"/>
+        <INDEX NAME="is_active" UNIQUE="false" FIELDS="is_active"/>
+        <INDEX NAME="manager_employee" UNIQUE="true" FIELDS="manager_id, employee_id"/>
+      </INDEXES>
+    </TABLE>
+
+    <!-- Shared access do klastrów/opportunities -->
+    <TABLE NAME="aitools_shared_access" COMMENT="Shared access to clusters and opportunities">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="resource_type" TYPE="char" LENGTH="20" NOTNULL="true" COMMENT="cluster, opportunity"/>
+        <FIELD NAME="resource_id" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="ID of cluster or opportunity"/>
+        <FIELD NAME="user_id" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="User granted access"/>
+        <FIELD NAME="access_level" TYPE="char" LENGTH="10" NOTNULL="true" DEFAULT="view" COMMENT="view, edit, manage"/>
+        <FIELD NAME="granted_by" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="User who granted access"/>
+        <FIELD NAME="granted_date" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="Grant timestamp"/>
+        <FIELD NAME="expires_date" TYPE="int" LENGTH="10" NOTNULL="false" COMMENT="Expiration timestamp (optional)"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="user_id" TYPE="foreign" FIELDS="user_id" REFTABLE="user" REFFIELDS="id"/>
+        <KEY NAME="granted_by" TYPE="foreign" FIELDS="granted_by" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="resource_type_id" UNIQUE="false" FIELDS="resource_type, resource_id"/>
+        <INDEX NAME="user_id" UNIQUE="false" FIELDS="user_id"/>
+        <INDEX NAME="resource_user" UNIQUE="true" FIELDS="resource_type, resource_id, user_id"/>
+        <INDEX NAME="expires_date" UNIQUE="false" FIELDS="expires_date"/>
+      </INDEXES>
+    </TABLE>
+
+    <!-- Activity log (audit trail) -->
+    <TABLE NAME="aitools_activity_log" COMMENT="Activity logging for audit trail">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="user_id" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="User who performed action"/>
+        <FIELD NAME="resource_type" TYPE="char" LENGTH="50" NOTNULL="true" COMMENT="cluster, company, person, message, opportunity"/>
+        <FIELD NAME="resource_id" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="ID of affected resource"/>
+        <FIELD NAME="action" TYPE="char" LENGTH="100" NOTNULL="true" COMMENT="created, modified, viewed, shared, deleted"/>
+        <FIELD NAME="details" TYPE="text" NOTNULL="false" COMMENT="JSON with action details"/>
+        <FIELD NAME="timestamp" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="Action timestamp"/>
+        <FIELD NAME="ip_address" TYPE="char" LENGTH="45" NOTNULL="false" COMMENT="User IP address"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="user_id" TYPE="foreign" FIELDS="user_id" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="user_id" UNIQUE="false" FIELDS="user_id"/>
+        <INDEX NAME="resource_type_id" UNIQUE="false" FIELDS="resource_type, resource_id"/>
+        <INDEX NAME="action" UNIQUE="false" FIELDS="action"/>
+        <INDEX NAME="timestamp" UNIQUE="false" FIELDS="timestamp"/>
+        <INDEX NAME="user_timestamp" UNIQUE="false" FIELDS="user_id, timestamp"/>
+      </INDEXES>
+    </TABLE>
+
+  </TABLES>
+</XMLDB>

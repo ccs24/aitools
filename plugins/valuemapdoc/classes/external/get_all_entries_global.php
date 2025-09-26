@@ -348,6 +348,14 @@ class get_all_entries_global extends external_api {
         // Determine entry type and preview
         $entry_type = self::get_entry_type($entry_data);
         $entry_preview = self::get_entry_preview($entry_data);
+        $edit_url = new \moodle_url('/mod/valuemapdoc/edit.php', [
+                'id' => $activity['cmid'],
+                'entryid' => $entry->id ]);
+
+        $view_url = new \moodle_url('/mod/valuemapdoc/view.php', [
+                'id' => $activity['cmid'],
+                'entryid' => $entry->id
+        ]);
 
         return [
             'id' => (int)$entry->id,
@@ -366,13 +374,8 @@ class get_all_entries_global extends external_api {
             'timemodified' => (int)$entry->timemodified,
             'timemodified_formatted' => userdate($entry->timemodified, get_string('strftimedatefullshort')),
             'timemodified_relative' => self::get_relative_time($entry->timemodified),
-            'edit_url' => new \moodle_url('/mod/valuemapdoc/edit.php', [
-                'id' => $activity['cmid'],
-                'entryid' => $entry->id ]),
-            'view_url' => new \moodle_url('/mod/valuemapdoc/view.php', [
-                'id' => $activity['cmid'],
-                'entryid' => $entry->id
-            ]),
+            'edit_url' => (string)$edit_url,
+            'view_url' => (string) $view_url,
             'username' => $entry->username,
             'user_fullname' => fullname($entry),
             'ismaster' => (int)$entry->ismaster

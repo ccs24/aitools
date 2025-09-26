@@ -1,0 +1,273 @@
+{{!
+    Template for cluster recent activity dashboard block
+    Context: activity data from plugin->get_recent_activity()
+}}
+<div class="cluster-activity-summary">
+    <div class="activity-header mb-3">
+        <h6><i class="fa fa-history"></i> Recent Activity</h6>
+    </div>
+    
+    {{#has_activities}}
+    <div class="activity-timeline">
+        {{#activities}}
+        <div class="activity-item" data-action="{{action}}" data-resource="{{resource_type}}">
+            <div class="activity-icon">
+                <i class="fa {{#action}}
+                    {{#cluster_created}}fa-plus-circle text-success{{/cluster_created}}
+                    {{#cluster_modified}}fa-edit text-primary{{/cluster_modified}}
+                    {{#company_added}}fa-building text-info{{/company_added}}
+                    {{#person_added}}fa-user-plus text-success{{/person_added}}
+                    {{#message_created}}fa-comment text-warning{{/message_created}}
+                    {{#message_used}}fa-paper-plane text-primary{{/message_used}}
+                {{/action}}"></i>
+            </div>
+            <div class="activity-content">
+                <div class="activity-description">
+                    {{#action}}
+                        {{#cluster_created}}
+                            <strong>Created cluster:</strong> {{details.name}}
+                            {{#cluster_name}}in {{cluster_name}}{{/cluster_name}}
+                        {{/cluster_created}}
+                        {{#cluster_modified}}
+                            <strong>Updated cluster:</strong> {{cluster_name}}
+                        {{/cluster_modified}}
+                        {{#company_added}}
+                            <strong>Added company:</strong> {{details.name}}
+                            {{#cluster_name}}to {{cluster_name}}{{/cluster_name}}
+                        {{/company_added}}
+                        {{#person_added}}
+                            <strong>Added contact:</strong> {{details.name}}
+                            {{#cluster_name}}in {{cluster_name}}{{/cluster_name}}
+                        {{/person_added}}
+                        {{#message_created}}
+                            <strong>Created message:</strong> {{details.title}}
+                            {{#cluster_name}}for {{cluster_name}}{{/cluster_name}}
+                        {{/message_created}}
+                        {{#message_used}}
+                            <strong>Used message:</strong> {{details.title}}
+                            {{#details.channel}}via {{details.channel}}{{/details.channel}}
+                        {{/message_used}}
+                    {{/action}}
+                </div>
+                <div class="activity-meta">
+                    <small class="text-muted">
+                        <time data-timestamp="{{timestamp}}">{{timestamp}}</time>
+                        {{#resource_type}}
+                        <span class="activity-type-badge">{{resource_type}}</span>
+                        {{/resource_type}}
+                    </small>
+                </div>
+            </div>
+        </div>
+        {{/activities}}
+    </div>
+    
+    <div class="activity-footer mt-3 text-center">
+        <a href="/local/aitools/plugins/cluster/activity.php" class="btn btn-outline-primary btn-sm">
+            <i class="fa fa-list"></i> View All Activity
+        </a>
+    </div>
+    {{/has_activities}}
+    
+    {{^has_activities}}
+    <div class="no-activity text-center py-4">
+        <i class="fa fa-clock-o fa-2x text-muted mb-2"></i>
+        <p class="text-muted mb-1">No recent activity</p>
+        <small class="text-muted">Start creating clusters to see activity here</small>
+    </div>
+    {{/has_activities}}
+</div>
+
+<style>
+.cluster-activity-summary {
+    padding: 15px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.activity-timeline {
+    position: relative;
+}
+
+.activity-timeline::before {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #dee2e6;
+}
+
+.activity-item {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 20px;
+    padding-left: 45px;
+}
+
+.activity-icon {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 30px;
+    height: 30px;
+    background: #ffffff;
+    border: 2px solid #dee2e6;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+}
+
+.activity-content {
+    flex: 1;
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 12px 15px;
+    border-left: 3px solid #0d6efd;
+}
+
+.activity-description {
+    margin-bottom: 5px;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.activity-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 12px;
+}
+
+.activity-type-badge {
+    background: #e9ecef;
+    color: #495057;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-left: 8px;
+}
+
+/* Color coding for different actions */
+.activity-item[data-action*="created"] .activity-content {
+    border-left-color: #198754;
+}
+
+.activity-item[data-action*="modified"] .activity-content {
+    border-left-color: #0d6efd;
+}
+
+.activity-item[data-action*="added"] .activity-content {
+    border-left-color: #0dcaf0;
+}
+
+.activity-item[data-action*="used"] .activity-content {
+    border-left-color: #ffc107;
+}
+
+.no-activity {
+    min-height: 150px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .cluster-activity-summary {
+        padding: 10px;
+        max-height: 300px;
+    }
+    
+    .activity-item {
+        padding-left: 35px;
+        margin-bottom: 15px;
+    }
+    
+    .activity-icon {
+        width: 25px;
+        height: 25px;
+        font-size: 10px;
+    }
+    
+    .activity-content {
+        padding: 10px 12px;
+    }
+    
+    .activity-description {
+        font-size: 13px;
+    }
+}
+
+/* Smooth scrollbar */
+.cluster-activity-summary::-webkit-scrollbar {
+    width: 6px;
+}
+
+.cluster-activity-summary::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.cluster-activity-summary::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.cluster-activity-summary::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+</style>
+
+<script>
+// Format timestamps and add interactivity
+document.addEventListener('DOMContentLoaded', function() {
+    // Format timestamps
+    const timeElements = document.querySelectorAll('.activity-meta [data-timestamp]');
+    timeElements.forEach(function(element) {
+        const timestamp = parseInt(element.getAttribute('data-timestamp'));
+        if (timestamp) {
+            const date = new Date(timestamp * 1000);
+            const now = new Date();
+            const diffTime = now - date;
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
+            const diffMinutes = Math.floor(diffTime / (1000 * 60));
+            
+            if (diffDays > 7) {
+                element.textContent = date.toLocaleDateString();
+            } else if (diffDays > 0) {
+                element.textContent = diffDays + 'd ago';
+            } else if (diffHours > 0) {
+                element.textContent = diffHours + 'h ago';
+            } else if (diffMinutes > 0) {
+                element.textContent = diffMinutes + 'm ago';
+            } else {
+                element.textContent = 'Just now';
+            }
+            
+            // Add full timestamp as title for hover
+            element.setAttribute('title', date.toLocaleString());
+        }
+    });
+    
+    // Add click handlers for activity items
+    const activityItems = document.querySelectorAll('.activity-item');
+    activityItems.forEach(function(item) {
+        item.style.cursor = 'pointer';
+        item.addEventListener('click', function() {
+            // Could navigate to relevant page or show more details
+            const resourceType = item.getAttribute('data-resource');
+            const action = item.getAttribute('data-action');
+            console.log('Activity clicked:', resourceType, action);
+        });
+    });
+});
+</script>
