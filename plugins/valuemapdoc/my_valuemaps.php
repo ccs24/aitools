@@ -1,5 +1,8 @@
 <?php
 require_once('../../../../config.php');
+require_once($CFG->dirroot . '/mod/valuemapdoc/classes/local/field_levels.php');
+
+use mod_valuemapdoc\local\field_levels;
 
 require_login();
 
@@ -28,12 +31,37 @@ $PAGE->requires->js('/mod/valuemapdoc/scripts/tabulator.min.js', true);
 // Nasze lokalne style (tylko nasze customizacje)
 $PAGE->requires->css('/local/aitools/plugins/valuemapdoc/styles/valuemaps.css');
 
-// Nasz JavaScript manager
 $PAGE->requires->js_call_amd('aitoolsub_valuemapdoc/valuemaps_manager', 'init');
 
 // Add navigation
 $PAGE->navbar->add('AI Tools', new moodle_url('/local/aitools/'));
 $PAGE->navbar->add('My Value Maps');
+
+// Get user's field level and filter columns accordingly (like in module)
+$user_fields = field_levels::get_user_fields();
+$user_level_config = field_levels::get_user_level_config();
+
+// Define all possible columns (same as in module)
+$all_columns = [
+    'market', 'industry', 'role', 'businessgoal', 'strategy', 'difficulty',
+    'situation', 'statusquo', 'coi', 'differentiator', 'impact', 'newstate',
+    'successmetric', 'impactstrategy', 'impactbusinessgoal', 'impactothers',
+    'proof', 'time2results', 'quote', 'clientname'
+];
+
+// Filter columns based on user's level (same logic as module)
+$columns = array_values(array_intersect($all_columns, $user_fields));
+
+// Generate columns JSON for JavaScript (same as module)
+$columnsjson = json_encode(array_map(function($c) {
+    return [
+        'title' => get_string($c, 'mod_valuemapdoc'),
+        'field' => $c,
+        'hozAlign' => 'left',
+        'headerSort' => true,
+        'width' => 150
+    ];
+}, $columns), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
 
 // Get initial data for page statistics
 try {
@@ -52,7 +80,16 @@ try {
         'back_url' => new moodle_url('/local/aitools/'),
         'ajax_url' => new moodle_url('/lib/ajax/service.php'),
         'sesskey' => sesskey(),
-        'userid' => $USER->id
+        'userid' => $USER->id,
+        'columns' => $columnsjson,
+        'field_level' => [
+            'current_level' => field_levels::get_user_level(),
+            'level_name' => $user_level_config['name'],
+            'fields_count' => $user_level_config['fields_count'],
+            'preferences_url' => new moodle_url('/mod/valuemapdoc/preferences.php', [
+                'returnurl' => $PAGE->url->out(false)
+            ])
+        ]
     ];
     
 } catch (Exception $e) {
@@ -69,6 +106,13 @@ try {
         'ajax_url' => new moodle_url('/lib/ajax/service.php'),
         'sesskey' => sesskey(),
         'userid' => $USER->id,
+        'columns' => '[]',
+        'field_level' => [
+            'current_level' => 'basic',
+            'level_name' => 'Basic',
+            'fields_count' => 7,
+            'preferences_url' => new moodle_url('/mod/valuemapdoc/preferences.php')
+        ],
         'error_message' => 'Could not load initial data: ' . $e->getMessage()
     ];
     
@@ -89,5 +133,8 @@ if (isset($template_data['error_message'])) {
 // Render the template
 $renderer = $PAGE->get_renderer('aitoolsub_valuemapdoc');
 echo $renderer->render_from_template('aitoolsub_valuemapdoc/my_valuemaps', $template_data);
+
+// Add columns JSON for JavaScript (same pattern as module)
+echo '<script type="application/json" id="valuemap-columns">' . $template_data['columns'] . '</script>';
 
 echo $OUTPUT->footer();

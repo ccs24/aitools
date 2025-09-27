@@ -346,16 +346,14 @@ class get_all_entries_global extends external_api {
         ];
 
         // Determine entry type and preview
-        $entry_type = self::get_entry_type($entry_data);
-        $entry_preview = self::get_entry_preview($entry_data);
-        $edit_url = new \moodle_url('/mod/valuemapdoc/edit.php', [
+        $edit_url =  new \moodle_url('/mod/valuemapdoc/edit.php', [
                 'id' => $activity['cmid'],
-                'entryid' => $entry->id ]);
-
+                'entryid' => $entry->id
+            ]);
         $view_url = new \moodle_url('/mod/valuemapdoc/view.php', [
                 'id' => $activity['cmid'],
                 'entryid' => $entry->id
-        ]);
+            ]);
 
         return [
             'id' => (int)$entry->id,
@@ -365,8 +363,6 @@ class get_all_entries_global extends external_api {
             'activity_name' => $activity['activity_name'],
             'activity_id' => (int)$activity['instance'],
             'cmid' => (int)$entry->cmid,
-            'entry_type' => $entry_type,
-            'entry_preview' => $entry_preview,
             'entry_data' => json_encode($entry_data),
             'timecreated' => (int)$entry->timemodified, // Using timemodified as timecreated
             'timecreated_formatted' => userdate($entry->timemodified, get_string('strftimedatefullshort')),
@@ -374,7 +370,7 @@ class get_all_entries_global extends external_api {
             'timemodified' => (int)$entry->timemodified,
             'timemodified_formatted' => userdate($entry->timemodified, get_string('strftimedatefullshort')),
             'timemodified_relative' => self::get_relative_time($entry->timemodified),
-            'edit_url' => (string)$edit_url,
+            'edit_url' => (string) $edit_url,
             'view_url' => (string) $view_url,
             'username' => $entry->username,
             'user_fullname' => fullname($entry),
@@ -382,60 +378,6 @@ class get_all_entries_global extends external_api {
         ];
     }
 
-    /**
-     * Get preview text from entry data
-     * @param array $entry_data Entry data
-     * @return string
-     */
-    private static function get_entry_preview($entry_data) {
-        if (empty($entry_data)) {
-            return 'No content available';
-        }
-
-        // Try to extract meaningful preview from ValueMapDoc specific fields
-        $preview_fields = ['clientname', 'market', 'industry', 'role', 'businessgoal', 'situation', 'difficulty'];
-        
-        foreach ($preview_fields as $field) {
-            if (isset($entry_data[$field]) && !empty(trim($entry_data[$field]))) {
-                $text = strip_tags($entry_data[$field]);
-                return strlen($text) > 100 ? substr($text, 0, 100) . '...' : $text;
-            }
-        }
-
-        // Fallback - use first available non-empty value
-        foreach ($entry_data as $key => $value) {
-            if (is_string($value) && !empty(trim($value))) {
-                $text = strip_tags($value);
-                return strlen($text) > 100 ? substr($text, 0, 100) . '...' : $text;
-            }
-        }
-
-        return 'No content available';
-    }
-
-    /**
-     * Determine entry type from data structure specific to ValueMapDoc
-     * @param array $entry_data Entry data
-     * @return string
-     */
-    private static function get_entry_type($entry_data) {
-        if (empty($entry_data)) {
-            return 'unknown';
-        }
-
-        // Analyze ValueMapDoc specific structure
-        if (!empty($entry_data['clientname']) || !empty($entry_data['market'])) {
-            return 'customer_profile';
-        } elseif (!empty($entry_data['difficulty']) && !empty($entry_data['differentiator'])) {
-            return 'value_proposition';
-        } elseif (!empty($entry_data['situation']) && !empty($entry_data['statusquo'])) {
-            return 'pain_analysis';
-        } elseif (!empty($entry_data['businessgoal']) && !empty($entry_data['strategy'])) {
-            return 'value_map';
-        } else {
-            return 'general';
-        }
-    }
 
     /**
      * Get relative time string
@@ -476,8 +418,6 @@ class get_all_entries_global extends external_api {
                     'activity_name' => new external_value(PARAM_TEXT, 'Activity name'),
                     'activity_id' => new external_value(PARAM_INT, 'Activity ID'),
                     'cmid' => new external_value(PARAM_INT, 'Course module ID'),
-                    'entry_type' => new external_value(PARAM_TEXT, 'Entry type'),
-                    'entry_preview' => new external_value(PARAM_TEXT, 'Entry preview'),
                     'entry_data' => new external_value(PARAM_RAW, 'Entry data'),
                     'timecreated' => new external_value(PARAM_INT, 'Creation timestamp'),
                     'timecreated_formatted' => new external_value(PARAM_TEXT, 'Formatted creation time'),
