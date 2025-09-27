@@ -1,62 +1,76 @@
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
 /**
- * ValueMaps Manager for AI Tools Subplugin - Fixed Version
- * 
- * @module aitoolsub_valuemapdoc/valuemaps_manager
- * @copyright 2024 Your Organization
+ * ValueMaps Manager JavaScript Module
+ * Optimized for cross-course/activity value map entries display
+ * Handles 1-10 activities with 5-50 entries each (~500 max entries)
+ *
+ * @copyright  2024 Local AI Tools
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notification) {
-    
+    'use strict';
+
     var table = null;
     var config = window.valuemapsConfig || {};
     var allData = [];
     var processedData = [];
     var selectedRows = [];
+    var currentStatistics = {};
+
+    // CONFIGURATION: Choose display method
+    var USE_NATIVE_GROUPING = false; // Set to true for OPTION 2, false for OPTION 1
 
     return {
         /**
-         * Initialize the valuemaps manager
+         * Initialize the module
          */
         init: function() {
-            console.log('[valuemaps_manager] Module loaded');
-            
-            // Get columns from element (same pattern as module)
+            // Get columns configuration from DOM
             var columnsElement = document.querySelector('#valuemap-columns');
-            if (!columnsElement || !columnsElement.textContent) {
-                console.warn('[valuemaps_manager] Columns not found');
-                return;
-            }
+            if (columnsElement && columnsElement.textContent) {
+                var columns;
+                try {
+                    columns = JSON.parse(columnsElement.textContent);
+                } catch (e) {
+                    this.showErrorState('Invalid column configuration');
+                    return;
+                }
 
-            var columns;
-            try {
-                columns = JSON.parse(columnsElement.textContent);
-                console.log('[valuemaps_manager] Parsed columns:', columns);
-            } catch (e) {
-                console.error('[valuemaps_manager] Error parsing columns:', e);
-                return;
+                if (Array.isArray(columns)) {
+                    this.waitForTabulator(columns);
+                } else {
+                    this.showErrorState('Column configuration is not valid');
+                }
+            } else {
+                this.showErrorState('Column configuration not found');
             }
-
-            if (!Array.isArray(columns)) {
-                console.error('[valuemaps_manager] Columns is not an array');
-                return;
-            }
-
-            // Wait for Tabulator to be available
-            this.waitForTabulator(columns);
         },
 
         /**
-         * Wait for Tabulator library to be loaded
+         * Wait for Tabulator to be available and then initialize
+         * @param {Array} columns Column configuration from DOM
          */
         waitForTabulator: function(columns) {
             var self = this;
-            
             if (typeof window.Tabulator !== 'undefined') {
-                console.log('[valuemaps_manager] Tabulator available, initializing...');
                 this.bindEvents();
                 this.loadData(columns);
             } else {
-                console.log('[valuemaps_manager] Waiting for Tabulator...');
                 setTimeout(function() {
                     self.waitForTabulator(columns);
                 }, 100);
@@ -68,36 +82,36 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
          */
         bindEvents: function() {
             var self = this;
-            
+
             // Refresh data
             $('#refresh-data').on('click', function() {
                 self.init();
             });
-            
+
             // Export data
             $('#export-data').on('click', function() {
                 self.showExportOptions();
             });
-            
+
             // Clear filters
             $('#clear-filters').on('click', function() {
                 self.clearFilters();
             });
-            
+
             // Filter controls
             $('#filter-course, #filter-activity').on('change', function() {
                 self.applyFilters();
             });
-            
+
             $('#search-entries').on('input', function() {
                 self.applyFilters();
             });
-            
+
             // Retry loading
             $('#retry-loading').on('click', function() {
                 self.init();
             });
-            
+
             // Fullscreen toggle
             $('#toggle-fullscreen').on('click', function() {
                 self.toggleFullscreen();
@@ -105,61 +119,103 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
         },
 
         /**
-         * Load data from server
+         * Load data from server - use static columns from DOM
+         * @param {Array} columns Column configuration from DOM
          */
         loadData: function(columns) {
             var self = this;
             this.showLoadingState();
-            
+
             Ajax.call([{
                 methodname: 'aitoolsub_valuemapdoc_get_all_entries_global',
                 args: {
-                    userid: config.userid || 0
+                    userid: config.userid || 0,
+                    page: 0,
+                    limit: 0
                 }
             }])[0].done(function(data) {
+                // Store raw data
                 allData = data.entries || [];
-                
-                console.log('[valuemaps_manager] Entries loaded:', allData, 'records');
-                
-                // Debug: Check first entry structure
+                currentStatistics = data.statistics || {};
+                console.log('Loaded entries:', allData.length);
+                console.log('Statistics:', currentStatistics);     
+                console.log('Columns:', columns);
+
+                // Update UI with statistics
+                self.updateStatistics(currentStatistics);
+                self.populateFilterOptions(currentStatistics);
+
+                console.log('Static columns count:', columns.length);
+
                 if (allData.length > 0) {
-                    console.log('[valuemaps_manager] First entry data:', allData[0]);
-                    console.log('[valuemaps_manager] Available fields:', Object.keys(allData[0]));
-                    
-                    // Debug specific fields
-                    console.log('[valuemaps_manager] Entry market field:', allData[0].market);
-                    console.log('[valuemaps_manager] Entry role field:', allData[0].role);
-                    console.log('[valuemaps_manager] Entry entry_data field:', allData[0].entry_data);
-                }
-                
-                // Update statistics
-                self.updateStatistics(data.statistics);
-                
-                // Populate filter options
-                self.populateFilterOptions(data);
-                
-                // Process data with group separators
-                processedData = self.processDataWithSeparators(allData);
-                
-                // Initialize or update table
-                if (processedData.length > 0) {
-                    self.initializeTable(columns, processedData);
+                    var groupedData = self.processDataWithNativeGrouping(allData);
+                    self.initializeTableWithGrouping(columns, groupedData);
                     self.showTableState();
                 } else {
                     self.showEmptyState();
                 }
-                
+
             }).fail(function(error) {
-                console.error('[valuemaps_manager] Failed to load entries:', error);
-                self.showErrorState(error.message || 'Unknown error occurred');
+                self.showErrorState(error.message || 'Failed to load entries');
                 Notification.exception(error);
             });
         },
 
         /**
-         * Process data and add group separators with edit buttons
+         * Build user-specific columns based on field level (7/13/20 fields)
+         * @param {Array} userFields Array of field names for user's level
+         * @param {Object} levelConfig User's level configuration
+         * @return {Array} Column definitions for Tabulator
          */
-        processDataWithSeparators: function(entries) {
+        buildUserColumns: function(userFields, levelConfig) {
+            // Field to title mapping
+            var fieldTitles = {
+                'market': 'Market',
+                'industry': 'Industry', 
+                'role': 'Role',
+                'businessgoal': 'Business Goal',
+                'strategy': 'Strategy',
+                'difficulty': 'Difficulty',
+                'situation': 'Situation',
+                'statusquo': 'Status Quo',
+                'coi': 'Cost of Inaction',
+                'differentiator': 'Differentiator',
+                'impact': 'Impact',
+                'newstate': 'New State',
+                'successmetric': 'Success Metric',
+                'impactstrategy': 'Impact Strategy',
+                'impactbusinessgoal': 'Impact Business Goal',
+                'impactothers': 'Impact Others',
+                'proof': 'Proof',
+                'time2results': 'Time to Results',
+                'quote': 'Quote',
+                'clientname': 'Client Name'
+            };
+
+            var columns = [];
+
+            // Build columns from user fields
+            userFields.forEach(function(fieldName) {
+                columns.push({
+                    title: fieldTitles[fieldName] || fieldName,
+                    field: fieldName,
+                    hozAlign: 'left',
+                    headerSort: true,
+                    width: 150,
+                    headerFilter: 'input',
+                    headerFilterPlaceholder: 'Filter...'
+                });
+            });
+
+            return columns;
+        },
+
+        /**
+         * OPTION 1: Process data with custom group separators (CSS positioning)
+         * @param {Array} entries Array of entries from server
+         * @return {Array} Processed data with group separators
+         */
+        processDataWithGroupSeparators: function(entries) {
             if (entries.length === 0) {
                 return [];
             }
@@ -167,26 +223,40 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
             var processedData = [];
             var currentGroup = null;
 
-            // Data is already sorted by course_name, activity_name, timemodified
+            // Sort entries by course name, then activity name, then modification time
+            entries.sort(function(a, b) {
+                if (a.course_name !== b.course_name) {
+                    return a.course_name.localeCompare(b.course_name);
+                }
+                if (a.activity_name !== b.activity_name) {
+                    return a.activity_name.localeCompare(b.activity_name);
+                }
+                return b.timemodified - a.timemodified; // Newest first
+            });
+
             entries.forEach(function(entry) {
                 var groupKey = entry.course_name + ' → ' + entry.activity_name;
-                
-                // Add separator row when group changes
+
+                // Add group separator when group changes
                 if (currentGroup !== groupKey) {
                     processedData.push({
                         id: 'separator_' + processedData.length,
                         isSeparator: true,
                         groupTitle: groupKey,
                         course_name: entry.course_name,
+                        course_shortname: entry.course_shortname,
                         activity_name: entry.activity_name,
                         cmid: entry.cmid,
-                        // Fix: Create proper view URL for the module
-                        edit_url: M.cfg.wwwroot + '/mod/valuemapdoc/view.php?id=' + entry.cmid
+                        course_id: entry.course_id,
+                        activity_id: entry.activity_id,
+                        // Quick action URLs
+                        view_activity_url: M.cfg.wwwroot + '/mod/valuemapdoc/view.php?id=' + entry.cmid,
+                        course_url: M.cfg.wwwroot + '/course/view.php?id=' + entry.course_id
                     });
                     currentGroup = groupKey;
                 }
-                
-                // Add actual entry
+
+                // Add the actual entry
                 processedData.push(entry);
             });
 
@@ -194,33 +264,62 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
         },
 
         /**
-         * Update statistics display
+         * OPTION 2: Process data for native Tabulator grouping
+         * @param {Array} entries Array of entries from server  
+         * @return {Array} Processed data for grouping
+         */
+        processDataWithNativeGrouping: function(entries) {
+            if (entries.length === 0) {
+                return [];
+            }
+
+            // Add grouping field and proper URLs to each entry
+            entries.forEach(function(entry) {
+                entry.course_activity_group = entry.course_name + ' → ' + entry.activity_name;
+                
+                // Fix undefined URLs - build proper activity URLs
+                entry.view_activity_url = M.cfg.wwwroot + '/mod/valuemapdoc/view.php?id=' + entry.cmid;
+                entry.edit_url = M.cfg.wwwroot + '/mod/valuemapdoc/edit.php?id=' + entry.cmid + '&entryid=' + entry.id;
+            });
+
+            return entries;
+        },
+
+        /**
+         * Update statistics display with cross-course data
+         * @param {Object} stats Statistics object from server
          */
         updateStatistics: function(stats) {
             $('#stat-total-entries').text(stats.total_entries || 0);
             $('#stat-unique-courses').text(stats.unique_courses || 0);
             $('#stat-unique-activities').text(stats.unique_activities || 0);
+
+            // Update dashboard summary if present
+            if ($('.dashboard-summary').length > 0) {
+                $('.dashboard-summary .entries-count').text(stats.total_entries || 0);
+                $('.dashboard-summary .courses-count').text(stats.unique_courses || 0);
+                $('.dashboard-summary .activities-count').text(stats.unique_activities || 0);
+            }
         },
 
         /**
-         * Populate filter dropdowns
+         * Populate filter dropdown options from statistics
+         * @param {Object} stats Statistics containing lists
          */
-        populateFilterOptions: function(data) {
-            var stats = data.statistics || {};
-            
-            // Courses
+        populateFilterOptions: function(stats) {
+            // Populate course filter
             var courseSelect = $('#filter-course');
             courseSelect.find('option:not(:first)').remove();
-            if (stats.courses_list) {
+            if (stats.courses_list && stats.courses_list.length > 0) {
                 stats.courses_list.forEach(function(course) {
                     courseSelect.append('<option value="' + course + '">' + course + '</option>');
                 });
             }
-            
-            // Activities
+
+            // Populate activity filter
             var activitySelect = $('#filter-activity');
             activitySelect.find('option:not(:first)').remove();
-            if (stats.activities_list) {
+            if (stats.activities_list && stats.activities_list.length > 0) {
                 stats.activities_list.forEach(function(activity) {
                     activitySelect.append('<option value="' + activity + '">' + activity + '</option>');
                 });
@@ -228,121 +327,295 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
         },
 
         /**
-         * Prepare columns with checkbox selection and simplified data
+         * OPTION 1: Prepare columns for custom separators (CSS positioning)
+         * @param {Array} userColumns User's field columns (7/13/20)
+         * @return {Array} Enhanced columns for Tabulator
          */
-        prepareColumns: function(columns) {
+        prepareColumns: function(userColumns) {
             var self = this;
             var enhancedColumns = [];
-            
-            // Add checkbox column first (like in module)
+
+            // 1. Checkbox column - ONLY CHECKBOX, no HTML
             enhancedColumns.push({
-                formatter: function(cell, formatterParams) {
-                    var data = cell.getRow().getData();
-                    if (data.isSeparator) {
-                        // Show edit button in separator row
-                        return '<a href="' + data.edit_url + '" class="btn btn-sm btn-primary" target="_blank">' +
-                               '<i class="fa fa-edit"></i> Edit</a>';
-                    } else {
-                        // Show checkbox for data rows
-                        return '<input type="checkbox" class="entry-checkbox" data-entry-id="' + data.id + '">';
-                    }
-                },
-                width: 80,
+                title: '',
+                field: 'checkbox',
+                width: 40,
                 hozAlign: "center",
                 headerSort: false,
+                formatter: function(cell) {
+                    var data = cell.getRow().getData();
+                    if (data.isSeparator) {
+                        return '';
+                    }
+                    return '<input type="checkbox" class="entry-checkbox" data-entry-id="' + data.id + '">';
+                },
                 cellClick: function(e, cell) {
+                    e.stopPropagation();
                     var data = cell.getRow().getData();
                     if (!data.isSeparator) {
-                        e.stopPropagation();
                         self.toggleRowSelection(data.id);
                     }
                 }
             });
-            
-            // Add mapped columns from user's field level
-            columns.forEach(function(col) {
+
+            // 2. User's field columns - PLAIN TEXT ONLY
+            userColumns.forEach(function(col) {
                 enhancedColumns.push({
                     title: col.title,
                     field: col.field,
-                    hozAlign: col.hozAlign || 'left',
-                    headerSort: col.headerSort !== false,
+                    hozAlign: 'left',
+                    headerSort: true,
                     width: col.width || 150,
                     headerFilter: "input",
+                    headerFilterPlaceholder: "Filter " + col.title + "...",
                     editable: false,
                     formatter: function(cell) {
-                        var row = cell.getRow();
-                        var data = row.getData();
-                        
+                        var data = cell.getRow().getData();
                         if (data.isSeparator) {
                             return '';
                         }
-                        
-                        // Get value from the actual field
-                        var value = data[col.field];
-                        
-                        // Debug first few entries
-                        if (data.id <= 8) {
-                            console.log('Entry', data.id, 'field', col.field, 'value:', value);
-                        }
-                        
-                        if (value && value.length > 50) {
-                            return '<div class="text-truncate" style="max-width: ' + (col.width - 20) + 'px;" title="' + 
-                                   value + '">' + value + '</div>';
-                        }
-                        return value || '';
+                        // PLAIN TEXT - no HTML formatting
+                        return data[col.field] || '';
                     }
                 });
-            });
-            
-            // Add username column (simplified)
-            enhancedColumns.push({
-                title: "Author",
-                field: "username", 
-                hozAlign: "left",
-                headerSort: true,
-                width: 120,
-                headerFilter: "input",
-                editable: false,
-                formatter: function(cell) {
-                    var row = cell.getRow();
-                    var data = row.getData();
-                    
-                    if (data.isSeparator) {
-                        return '';
-                    }
-                    
-                    var value = cell.getValue();
-                    if (data.ismaster === 1) {
-                        return '<i class="fa fa-star text-warning" title="Master entry"></i> ' + value;
-                    }
-                    return value;
-                }
             });
 
             return enhancedColumns;
         },
 
         /**
+         * OPTION 2: Prepare columns for native grouping
+         * @param {Array} userColumns User's field columns (7/13/20)
+         * @return {Array} Enhanced columns for Tabulator
+         */
+        prepareColumnsForGrouping: function(userColumns) {
+            var self = this;
+            var enhancedColumns = [];
+
+            // 1. Checkbox column
+            enhancedColumns.push({
+                title: '',
+                field: 'checkbox',
+                width: 40,
+                hozAlign: "center",
+                headerSort: false,
+                formatter: function(cell) {
+                    return '<input type="checkbox" class="entry-checkbox" data-entry-id="' + cell.getRow().getData().id + '">';
+                },
+                cellClick: function(e, cell) {
+                    e.stopPropagation();
+                    self.toggleRowSelection(cell.getRow().getData().id);
+                }
+            });
+
+            // 2. User's field columns
+            userColumns.forEach(function(col) {
+                enhancedColumns.push({
+                    title: col.title,
+                    field: col.field,
+                    hozAlign: 'left',
+                    headerSort: true,
+                    width: col.width || 150,
+                    headerFilter: "input",
+                    //headerFilterPlaceholder: "Filter " + col.title + "...",
+                    editable: false,
+                    formatter: function(cell) {
+                        return cell.getRow().getData()[col.field] || '';
+                    }
+                });
+            });
+
+            return enhancedColumns;
+        },
+
+        /**
+         * OPTION 1: Initialize table with custom separators (CSS positioning)
+         * @param {Array} userColumns User's field columns (7/13/20)
+         * @param {Array} data Table data with separators
+         */
+        initializeTable: function(userColumns, data) {
+            var self = this;
+
+            if (table) {
+                table.destroy();
+            }
+
+            var enhancedColumns = this.prepareColumns(userColumns);
+
+            // eslint-disable-next-line no-undef
+            table = new Tabulator("#valuemaps-table", {
+                data: data,
+                columns: enhancedColumns,
+                layout: "fitColumns",
+                responsiveLayout: "hide",
+                placeholder: "No entries found",
+                pagination: "local",
+                paginationSize: 25,
+                paginationSizeSelector: [10, 25, 50, 100],
+                movableColumns: true,
+                resizableRows: false,
+                selectable: false,
+                tooltipsHeader: true,
+                
+                // Custom separator row formatting with CSS positioning
+                rowFormatter: function(row) {
+                    var data = row.getData();
+                    if (data.isSeparator) {
+                        var element = row.getElement();
+                        element.style.backgroundColor = "#f8f9fa";
+                        element.style.fontWeight = "bold";
+                        element.style.borderTop = "2px solid #007bff";
+                        element.style.cursor = "pointer";
+                        element.style.position = "relative";
+                        
+                        // Apply formatting after DOM is ready
+                        setTimeout(function() {
+                            var cells = row.getCells();
+                            if (cells.length > 0) {
+                                // Style the first cell to span full width
+                                var firstCellElement = cells[0].getElement();
+                                firstCellElement.style.position = "absolute";
+                                firstCellElement.style.left = "0";
+                                firstCellElement.style.right = "0";
+                                firstCellElement.style.width = "100%";
+                                firstCellElement.style.zIndex = "10";
+                                firstCellElement.style.backgroundColor = "#f8f9fa";
+                                firstCellElement.style.padding = "8px 12px";
+                                firstCellElement.style.borderTop = "2px solid #007bff";
+                                firstCellElement.innerHTML = '<span style="font-weight: bold; color: #007bff;">' + 
+                                                           data.groupTitle + '</span>';
+                                
+                                // Hide all other cells
+                                for (var i = 1; i < cells.length; i++) {
+                                    cells[i].getElement().style.visibility = "hidden";
+                                }
+                            }
+                        }, 10);
+                        
+                        // Click handler for separator
+                        element.onclick = function() {
+                            window.open(data.view_activity_url, '_blank');
+                        };
+                    }
+                }
+            });
+
+            // Double-click to edit entries
+            table.on("rowDblClick", function(e, row) {
+                var data = row.getData();
+                if (!data.isSeparator) {
+                    window.open(data.edit_url, '_blank');
+                }
+            });
+
+            // Initialize selection tracking
+            this.initializeSelectionTracking();
+        },
+
+        /**
+         * OPTION 2: Initialize table with native Tabulator grouping
+         * @param {Array} userColumns User's field columns
+         * @param {Array} data Table data
+         */
+        initializeTableWithGrouping: function(userColumns, data) {
+            var self = this;
+
+            if (table) {
+                table.destroy();
+            }
+
+            var enhancedColumns = this.prepareColumnsForGrouping(userColumns);
+
+            // eslint-disable-next-line no-undef
+            table = new Tabulator("#valuemaps-table", {
+                data: data,
+                columns: enhancedColumns,
+                layout: "fitColumns",
+                responsiveLayout: "hide",
+                placeholder: "No entries found",
+                pagination: "local",
+                paginationSize: 25,
+                paginationSizeSelector: [10, 25, 50, 100],
+                movableColumns: true,
+                resizableRows: false,
+                selectable: false,
+                tooltipsHeader: true,
+                
+                // Native grouping approach
+                groupBy: "course_activity_group",
+                groupHeader: function(value, count, data, group) {
+                    // Extract course and activity info from first item
+                    var firstItem = data[0];
+                    var viewUrl = firstItem.view_activity_url || (M.cfg.wwwroot + '/mod/valuemapdoc/view.php?id=' + firstItem.cmid);
+                    
+                    return '<span style="font-weight: bold; color: #007bff; cursor: pointer; display: block; padding: 8px; background: #f8f9fa; border-top: 2px solid #007bff;" ' +
+                           'onclick="window.open(\'' + viewUrl + '\', \'_blank\')" ' +
+                           'title="Click to open activity">' +
+                           value + ' (' + count + ' entries)</span>';
+                },
+                groupStartOpen: true,
+                groupToggleElement: "header"
+            });
+
+            // Row double-click to edit
+            table.on("rowDblClick", function(e, row) {
+                var data = row.getData();
+                window.open(data.edit_url, '_blank');
+            });
+
+            this.initializeSelectionTracking();
+        },
+
+        /**
+         * Initialize selection tracking for bulk operations
+         */
+        initializeSelectionTracking: function() {
+            var self = this;
+            
+            // Handle checkbox changes
+            $(document).on('change', '.entry-checkbox', function() {
+                var entryId = parseInt($(this).data('entry-id'));
+                var isChecked = $(this).prop('checked');
+                
+                if (isChecked) {
+                    if (selectedRows.indexOf(entryId) === -1) {
+                        selectedRows.push(entryId);
+                    }
+                } else {
+                    selectedRows = selectedRows.filter(function(id) {
+                        return id !== entryId;
+                    });
+                }
+                
+                self.updateSelectionUI();
+            });
+        },
+
+        /**
          * Toggle row selection
+         * @param {Number} entryId Entry ID to toggle
          */
         toggleRowSelection: function(entryId) {
-            var checkbox = $('input[data-entry-id="' + entryId + '"]');
-            var isSelected = checkbox.prop('checked');
+            var checkbox = $('.entry-checkbox[data-entry-id="' + entryId + '"]');
+            var isChecked = checkbox.prop('checked');
             
-            if (isSelected) {
+            checkbox.prop('checked', !isChecked);
+            
+            if (!isChecked) {
+                if (selectedRows.indexOf(entryId) === -1) {
+                    selectedRows.push(entryId);
+                }
+            } else {
                 selectedRows = selectedRows.filter(function(id) {
                     return id !== entryId;
                 });
-            } else {
-                selectedRows.push(entryId);
             }
             
-            checkbox.prop('checked', !isSelected);
             this.updateSelectionUI();
         },
 
         /**
-         * Update selection UI
+         * Update selection UI for bulk operations
          */
         updateSelectionUI: function() {
             var count = selectedRows.length;
@@ -351,16 +624,22 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
             if (count > 0) {
                 if (selectionInfo.length === 0) {
                     $('.table-controls').prepend(
-                        '<div class="selection-info alert alert-info py-2 px-3 me-2">' +
-                        '<span class="selection-count">' + count + '</span> entries selected ' +
-                        '<button class="btn btn-sm btn-primary ms-2" id="generate-docs">Generate Documents</button>' +
-                        '<button class="btn btn-sm btn-secondary ms-1" id="clear-selection">Clear</button>' +
+                        '<div class="selection-info alert alert-info d-flex align-items-center me-2">' +
+                        '<span class="selection-count">' + count + '</span>' +
+                        '<span class="ms-1 me-2">entries selected</span>' +
+                        '<button class="btn btn-sm btn-primary me-1" id="bulk-export">Export Selected</button>' +
+                        '<button class="btn btn-sm btn-outline-secondary" id="clear-selection">Clear</button>' +
                         '</div>'
                     );
                     
-                    // Bind events
-                    $('#generate-docs').on('click', this.generateDocuments.bind(this));
-                    $('#clear-selection').on('click', this.clearSelection.bind(this));
+                    // Bind bulk actions
+                    $('#bulk-export').on('click', function() {
+                        this.exportSelected();
+                    }.bind(this));
+                    
+                    $('#clear-selection').on('click', function() {
+                        this.clearSelection();
+                    }.bind(this));
                 } else {
                     selectionInfo.find('.selection-count').text(count);
                 }
@@ -370,233 +649,42 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
         },
 
         /**
-         * Clear selection
-         */
-        clearSelection: function() {
-            selectedRows = [];
-            $('.entry-checkbox').prop('checked', false);
-            this.updateSelectionUI();
-        },
-
-        /**
-         * Generate documents (placeholder)
-         */
-        generateDocuments: function() {
-            if (selectedRows.length === 0) {
-                alert('Please select entries first');
-                return;
-            }
-            
-            console.log('Generating documents for entries:', selectedRows);
-            alert('Document generation will be implemented here\nSelected entries: ' + selectedRows.length);
-        },
-
-        /**
-         * Initialize Tabulator table
-         */
-        initializeTable: function(columns, processedData) {
-            var self = this;
-            
-            var enhancedColumns = this.prepareColumns(columns);
-
-            // Initialize table
-            table = new window.Tabulator("#valuemaps-table", {
-                data: processedData,
-                columns: enhancedColumns,
-                layout: "fitDataTable",
-                height: "600px",
-                pagination: "local",
-                paginationSize: 20,
-                paginationSizeSelector: [10, 20, 50, 100],
-                movableColumns: true,
-                resizableRows: false,
-                selectable: false, // We handle selection manually
-                tooltips: true,
-                placeholder: "No entries to display",
-                persistence: {
-                    sort: true,
-                    filter: true,
-                    columns: true,
-                    page: true
-                },
-                persistenceID: "ai-tools-valuemaps-table",
-                locale: true,
-                langs: {
-                    "default": {
-                        "pagination": {
-                            "page_size": "Page Size",
-                            "first": "First",
-                            "prev": "Prev", 
-                            "next": "Next",
-                            "last": "Last"
-                        },
-                        "headerFilters": {
-                            "default": "Filter column..."
-                        }
-                    }
-                },
-                rowFormatter: function(row) {
-                    var data = row.getData();
-                    
-                    // Style separator rows
-                    if (data.isSeparator) {
-                        row.getElement().style.backgroundColor = '#f8f9fa';
-                        row.getElement().style.fontWeight = 'bold';
-                        row.getElement().style.borderTop = '2px solid #dee2e6';
-                        row.getElement().style.borderBottom = '1px solid #dee2e6';
-                        
-                        // Set content for separator row - show title across all columns
-                        var cells = row.getCells();
-                        if (cells.length > 1) {
-                            // First cell gets the button, second cell gets the title
-                            cells[1].getElement().innerHTML = '<i class="fa fa-folder-open me-2"></i>' + data.groupTitle;
-                            cells[1].getElement().style.fontWeight = 'bold';
-                            
-                            // Hide remaining cells
-                            for (var i = 2; i < cells.length; i++) {
-                                cells[i].getElement().style.display = 'none';
-                            }
-                            // Expand second cell to cover hidden ones
-                            cells[1].getElement().colSpan = cells.length - 1;
-                        }
-                        return;
-                    }
-                    
-                    // Style master entries
-                    if (data.ismaster === 1) {
-                        row.getElement().style.backgroundColor = '#eaffea';
-                        row.getElement().classList.add('ismaster');
-                    }
-                }
-            });
-
-            // Table events
-            table.on("tableBuilt", function() {
-                console.log('[valuemaps_manager] Table built successfully');
-                
-                // Add user filter toggle
-                self.addUserFilterToggle(table);
-            });
-
-            // Double click to edit (for data rows only)
-            table.on("rowDblClick", function(e, row) {
-                var data = row.getData();
-                if (!data.isSeparator) {
-                    window.open(data.edit_url, '_blank');
-                }
-            });
-
-            // Make manager globally available
-            window.valuemapsManager = this;
-        },
-
-        /**
-         * Add user filter toggle button
-         */
-        addUserFilterToggle: function(table) {
-            var self = this;
-            var toolbar = $('.card-header .table-controls');
-            if (toolbar.length === 0) {
-                return;
-            }
-
-            toolbar.append('<button type="button" class="btn btn-sm btn-outline-info ms-2" id="user-filter-toggle">' +
-                          '<i class="fa fa-user"></i> My Entries</button>');
-            
-            var showingOnlyMine = true;
-            $('#user-filter-toggle').on('click', function() {
-                var $btn = $(this);
-                if (showingOnlyMine) {
-                    // Show all entries (including separators)
-                    table.clearHeaderFilter("username");
-                    $btn.html('<i class="fa fa-users"></i> All Entries');
-                    $btn.removeClass('btn-outline-info').addClass('btn-outline-secondary');
-                    showingOnlyMine = false;
-                } else {
-                    // Show only user entries but keep separators visible
-                    self.filterToUserEntries(table);
-                    $btn.html('<i class="fa fa-user"></i> My Entries');
-                    $btn.removeClass('btn-outline-secondary').addClass('btn-outline-info');
-                    showingOnlyMine = true;
-                }
-            });
-            
-            // Start with user entries filtered
-            this.filterToUserEntries(table);
-        },
-
-        /**
-         * Filter to user entries but keep separators
-         */
-        filterToUserEntries: function(table) {
-            var currentUserId = M.cfg.userid;
-            
-            table.setFilter(function(data) {
-                // Always show separators
-                if (data.isSeparator) {
-                    return true;
-                }
-                // Show only current user's entries
-                return data.userid == currentUserId;
-            });
-        },
-
-        /**
-         * Apply filters from form controls
+         * Apply filters to the table with cross-course context
          */
         applyFilters: function() {
             if (!table) {
                 return;
             }
-            
+
+            // Clear existing filters
+            table.clearFilter();
+
+            // Get filter values
             var courseFilter = $('#filter-course').val();
             var activityFilter = $('#filter-activity').val();
             var searchFilter = $('#search-entries').val();
 
-            // Build filter function
-            var filters = [];
-            
+            // Apply course filter
             if (courseFilter) {
-                filters.push(function(data) {
-                    return data.isSeparator || data.course_name === courseFilter;
-                });
-            }
-            
-            if (activityFilter) {
-                filters.push(function(data) {
-                    return data.isSeparator || data.activity_name === activityFilter;
-                });
-            }
-            
-            if (searchFilter) {
-                filters.push(function(data) {
-                    if (data.isSeparator) {
-                        return data.groupTitle.toLowerCase().includes(searchFilter.toLowerCase());
-                    }
-                    // Search in various fields
-                    var searchFields = ['course_name', 'activity_name', 'username'];
-                    return searchFields.some(function(field) {
-                        var value = data[field];
-                        return value && value.toLowerCase().includes(searchFilter.toLowerCase());
-                    });
-                });
+                table.addFilter("course_name", "=", courseFilter);
             }
 
-            // Apply all filters
-            if (filters.length > 0) {
-                table.setFilter(function(data) {
-                    return filters.every(function(filter) {
-                        return filter(data);
-                    });
-                });
-            } else {
-                // If no filters, show according to user toggle
-                var isShowingAll = $('#user-filter-toggle').hasClass('btn-outline-secondary');
-                if (isShowingAll) {
-                    table.clearFilter();
-                } else {
-                    this.filterToUserEntries(table);
-                }
+            // Apply activity filter
+            if (activityFilter) {
+                table.addFilter("activity_name", "=", activityFilter);
+            }
+
+            // Apply search filter across multiple fields
+            if (searchFilter) {
+                table.addFilter([
+                    {field: "market", type: "like", value: searchFilter},
+                    {field: "industry", type: "like", value: searchFilter},
+                    {field: "role", type: "like", value: searchFilter},
+                    {field: "businessgoal", type: "like", value: searchFilter},
+                    {field: "course_name", type: "like", value: searchFilter},
+                    {field: "activity_name", type: "like", value: searchFilter},
+                    {field: "username", type: "like", value: searchFilter}
+                ]);
             }
         },
 
@@ -604,133 +692,123 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
          * Clear all filters
          */
         clearFilters: function() {
-            $('#filter-course, #filter-activity').val('');
-            $('#search-entries').val('');
-            
-            if (table) {
-                // Reset to user entries view
-                this.filterToUserEntries(table);
-                
-                // Reset user toggle
-                var $btn = $('#user-filter-toggle');
-                $btn.html('<i class="fa fa-user"></i> My Entries');
-                $btn.removeClass('btn-outline-secondary').addClass('btn-outline-info');
-            }
-        },
-
-        /**
-         * Show export options menu
-         */
-        showExportOptions: function() {
-            var self = this;
-            
-            var exportMenu = $('<div class="dropdown-menu dropdown-menu-end show">' +
-                '<h6 class="dropdown-header">Export Options</h6>' +
-                '<button class="dropdown-item" data-format="csv">' +
-                '<i class="fa fa-file-csv me-2"></i>Export as CSV</button>' +
-                '<button class="dropdown-item" data-format="json">' +
-                '<i class="fa fa-file-code me-2"></i>Export as JSON</button>' +
-                '</div>');
-
-            var exportBtn = $('#export-data');
-            var offset = exportBtn.offset();
-            exportMenu.css({
-                'position': 'absolute',
-                'top': offset.top + exportBtn.outerHeight(),
-                'left': offset.left - 150,
-                'z-index': 1050
-            });
-
-            exportMenu.find('[data-format]').on('click', function() {
-                var format = $(this).data('format');
-                self.exportData(format);
-                exportMenu.remove();
-            });
-
-            $(document).one('click', function() {
-                exportMenu.remove();
-            });
-
-            $('body').append(exportMenu);
-        },
-
-        /**
-         * Export table data (filter out separators)
-         */
-        exportData: function(format) {
             if (!table) {
                 return;
             }
 
-            var filename = 'valuemap_entries_' + new Date().toISOString().slice(0,10);
-            var exportData = table.getData().filter(function(row) {
-                return !row.isSeparator;
+            table.clearFilter();
+            $('#filter-course').val('');
+            $('#filter-activity').val('');
+            $('#search-entries').val('');
+        },
+
+        /**
+         * Clear selection
+         */
+        clearSelection: function() {
+            selectedRows = [];
+            $('.entry-checkbox').prop('checked', false);
+            $('.selection-info').remove();
+        },
+
+        /**
+         * Export selected entries
+         */
+        exportSelected: function() {
+            if (!table || selectedRows.length === 0) {
+                return;
+            }
+
+            // Filter table data to selected entries
+            var selectedData = table.getData().filter(function(row) {
+                return selectedRows.indexOf(row.id) !== -1;
             });
 
-            if (format === 'csv') {
-                table.download("csv", filename + ".csv", {}, "active");
-            } else if (format === 'json') {
-                var dataStr = JSON.stringify(exportData, null, 2);
-                var dataBlob = new Blob([dataStr], {type: 'application/json'});
-                var url = URL.createObjectURL(dataBlob);
-                var link = document.createElement('a');
-                link.href = url;
-                link.download = filename + '.json';
-                link.click();
-                URL.revokeObjectURL(url);
+            // Create temporary table for export
+            var tempDiv = $('<div id="temp-export-table" style="display: none;"></div>');
+            $('body').append(tempDiv);
+
+            // eslint-disable-next-line no-undef
+            var tempTable = new Tabulator("#temp-export-table", {
+                data: selectedData,
+                columns: this.prepareColumns([]), // Reuse column config
+                layout: "fitData"
+            });
+
+            // Export and cleanup
+            tempTable.download("csv", "selected-valuemap-entries.csv");
+            setTimeout(function() {
+                tempTable.destroy();
+                tempDiv.remove();
+            }, 1000);
+        },
+
+        /**
+         * Show export options
+         */
+        showExportOptions: function() {
+            if (!table) {
+                return;
             }
+
+            // Simple export all visible data
+            table.download("csv", "valuemap-entries-" + new Date().toISOString().split('T')[0] + ".csv");
         },
 
         /**
          * Toggle fullscreen mode
          */
         toggleFullscreen: function() {
-            $('body').toggleClass('valuemapdoc-fullscreen');
-            
-            var $btn = $('#toggle-fullscreen');
-            if ($('body').hasClass('valuemapdoc-fullscreen')) {
-                $btn.html('<i class="fa fa-compress"></i> Exit Fullscreen');
-                if (table) {
-                    table.redraw(true);
-                }
-            } else {
-                $btn.html('<i class="fa fa-expand"></i> Fullscreen');
-                if (table) {
-                    table.redraw(true);
-                }
+            var container = $('#valuemaps-container');
+            container.toggleClass('fullscreen');
+
+            if (table) {
+                setTimeout(function() {
+                    table.redraw();
+                }, 100);
             }
         },
 
         /**
-         * Show different states
+         * Show loading state
          */
         showLoadingState: function() {
-            $('#loading-overlay').show();
-            $('#valuemaps-table').hide();
+            $('#loading-state').show();
+            $('#table-state').hide();
             $('#empty-state').hide();
             $('#error-state').hide();
         },
 
+        /**
+         * Show table state
+         */
         showTableState: function() {
-            $('#loading-overlay').hide();
-            $('#valuemaps-table').show();
+            $('#loading-state').hide();
+            $('#table-state').show();
             $('#empty-state').hide();
             $('#error-state').hide();
         },
 
+        /**
+         * Show empty state
+         */
         showEmptyState: function() {
-            $('#loading-overlay').hide();
-            $('#valuemaps-table').hide();
+            $('#loading-state').hide();
+            $('#table-state').hide();
             $('#empty-state').show();
             $('#error-state').hide();
         },
 
+        /**
+         * Show error state
+         * @param {String} message Error message to display
+         */
         showErrorState: function(message) {
-            $('#loading-overlay').hide();
-            $('#valuemaps-table').hide();
+            $('#loading-state').hide();
+            $('#table-state').hide();
             $('#empty-state').hide();
             $('#error-state').show();
-            $('#error-message').text(message);
+            $('#error-message').text(message || 'An error occurred while loading data.');
         }
     };
 });
