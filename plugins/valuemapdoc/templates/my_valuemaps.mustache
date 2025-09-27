@@ -32,10 +32,17 @@
                     <small class="text-muted">
                         <i class="fa fa-cog me-1"></i>
                         Field Level: <strong>{{level_name}}</strong> ({{fields_count}} fields)
-                        {{#preferences_url}}
-                        - <a href="{{{preferences_url}}}" class="text-decoration-none">Change</a>
-                        {{/preferences_url}}
                     </small>
+                    
+                    <!-- Simple Field Level Form -->
+                    <form method="get" class="d-inline-block ms-3">
+                        <small class="text-muted me-2">Change to:</small>
+                        <select name="field_level" class="form-select form-select-sm d-inline-block" style="width: auto;" onchange="this.form.submit()">
+                            <option value="basic" {{#field_level.is_basic}}selected{{/field_level.is_basic}}>Basic (7 fields)</option>
+                            <option value="valueproposition" {{#field_level.is_valueproposition}}selected{{/field_level.is_valueproposition}}>Value Proposition (13 fields)</option>
+                            <option value="marketing" {{#field_level.is_marketing}}selected{{/field_level.is_marketing}}>Marketing (20 fields)</option>
+                        </select>
+                    </form>
                 </div>
                 {{/field_level}}
             </div>
@@ -127,24 +134,13 @@
                         <option value="">{{#str}}all_courses, aitoolsub_valuemapdoc{{/str}}</option>
                     </select>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-4">
                     <label class="form-label small">{{#str}}activity, core{{/str}}</label>
                     <select class="form-select form-select-sm" id="filter-activity">
                         <option value="">{{#str}}all_activities, aitoolsub_valuemapdoc{{/str}}</option>
                     </select>
                 </div>
-                <div class="col-md-3">
-                    <label class="form-label small">{{#str}}entry_type, aitoolsub_valuemapdoc{{/str}}</label>
-                    <select class="form-select form-select-sm" id="filter-type">
-                        <option value="">{{#str}}all_types, aitoolsub_valuemapdoc{{/str}}</option>
-                        <option value="customer_profile">{{#str}}customer_profile, aitoolsub_valuemapdoc{{/str}}</option>
-                        <option value="value_proposition">{{#str}}value_proposition, aitoolsub_valuemapdoc{{/str}}</option>
-                        <option value="pain_analysis">{{#str}}pain_analysis, aitoolsub_valuemapdoc{{/str}}</option>
-                        <option value="value_map">{{#str}}value_map, aitoolsub_valuemapdoc{{/str}}</option>
-                        <option value="general">{{#str}}general, aitoolsub_valuemapdoc{{/str}}</option>
-                    </select>
-                </div>
-                <div class="col-md-3">
+                <div class="col-md-4">
                     <label class="form-label small">{{#str}}search, core{{/str}}</label>
                     <input type="text" class="form-control form-control-sm" id="search-entries" 
                            placeholder="{{#str}}search_entries_placeholder, aitoolsub_valuemapdoc{{/str}}">

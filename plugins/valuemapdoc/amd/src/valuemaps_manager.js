@@ -1,7 +1,5 @@
 /**
- * ValueMaps Manager for AI Tools Subplugin
- * 
- * Manages the value maps table interface with Tabulator (similar to module but with groups)
+ * ValueMaps Manager for AI Tools Subplugin - Fixed Version
  * 
  * @module aitoolsub_valuemapdoc/valuemaps_manager
  * @copyright 2024 Your Organization
@@ -12,7 +10,8 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
     var table = null;
     var config = window.valuemapsConfig || {};
     var allData = [];
-    var username = M.cfg.fullname || M.cfg.username;
+    var processedData = [];
+    var selectedRows = [];
 
     return {
         /**
@@ -86,7 +85,7 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
             });
             
             // Filter controls
-            $('#filter-course, #filter-activity, #filter-type').on('change', function() {
+            $('#filter-course, #filter-activity').on('change', function() {
                 self.applyFilters();
             });
             
@@ -122,6 +121,17 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
                 
                 console.log('[valuemaps_manager] Entries loaded:', allData, 'records');
                 
+                // Debug: Check first entry structure
+                if (allData.length > 0) {
+                    console.log('[valuemaps_manager] First entry data:', allData[0]);
+                    console.log('[valuemaps_manager] Available fields:', Object.keys(allData[0]));
+                    
+                    // Debug specific fields
+                    console.log('[valuemaps_manager] Entry market field:', allData[0].market);
+                    console.log('[valuemaps_manager] Entry role field:', allData[0].role);
+                    console.log('[valuemaps_manager] Entry entry_data field:', allData[0].entry_data);
+                }
+                
                 // Update statistics
                 self.updateStatistics(data.statistics);
                 
@@ -129,7 +139,7 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
                 self.populateFilterOptions(data);
                 
                 // Process data with group separators
-                var processedData = self.processDataWithSeparators(allData);
+                processedData = self.processDataWithSeparators(allData);
                 
                 // Initialize or update table
                 if (processedData.length > 0) {
@@ -147,7 +157,7 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
         },
 
         /**
-         * Process data and add group separators
+         * Process data and add group separators with edit buttons
          */
         processDataWithSeparators: function(entries) {
             if (entries.length === 0) {
@@ -168,7 +178,10 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
                         isSeparator: true,
                         groupTitle: groupKey,
                         course_name: entry.course_name,
-                        activity_name: entry.activity_name
+                        activity_name: entry.activity_name,
+                        cmid: entry.cmid,
+                        // Fix: Create proper view URL for the module
+                        edit_url: M.cfg.wwwroot + '/mod/valuemapdoc/view.php?id=' + entry.cmid
                     });
                     currentGroup = groupKey;
                 }
@@ -215,27 +228,36 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
         },
 
         /**
-         * Get username from response data for current user
-         */
-        getUsernameFromResponse: function(response) {
-            var currentUserId = M.cfg.userid;
-            var userEntry = response.find(function(entry) {
-                return entry.userid == currentUserId;
-            });
-            
-            if (userEntry && userEntry.username) {
-                return userEntry.username;
-            }
-            
-            return M.cfg.fullname || M.cfg.username || 'Ja';
-        },
-
-        /**
-         * Prepare columns like in module (adapted for subplugin)
+         * Prepare columns with checkbox selection and simplified data
          */
         prepareColumns: function(columns) {
             var self = this;
             var enhancedColumns = [];
+            
+            // Add checkbox column first (like in module)
+            enhancedColumns.push({
+                formatter: function(cell, formatterParams) {
+                    var data = cell.getRow().getData();
+                    if (data.isSeparator) {
+                        // Show edit button in separator row
+                        return '<a href="' + data.edit_url + '" class="btn btn-sm btn-primary" target="_blank">' +
+                               '<i class="fa fa-edit"></i> Edit</a>';
+                    } else {
+                        // Show checkbox for data rows
+                        return '<input type="checkbox" class="entry-checkbox" data-entry-id="' + data.id + '">';
+                    }
+                },
+                width: 80,
+                hozAlign: "center",
+                headerSort: false,
+                cellClick: function(e, cell) {
+                    var data = cell.getRow().getData();
+                    if (!data.isSeparator) {
+                        e.stopPropagation();
+                        self.toggleRowSelection(data.id);
+                    }
+                }
+            });
             
             // Add mapped columns from user's field level
             columns.forEach(function(col) {
@@ -246,14 +268,23 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
                     headerSort: col.headerSort !== false,
                     width: col.width || 150,
                     headerFilter: "input",
-                    editable: false, // View-only in subplugin
+                    editable: false,
                     formatter: function(cell) {
                         var row = cell.getRow();
-                        if (row.getData().isSeparator) {
-                            return ''; // Empty for separator rows
+                        var data = row.getData();
+                        
+                        if (data.isSeparator) {
+                            return '';
                         }
                         
-                        var value = cell.getValue();
+                        // Get value from the actual field
+                        var value = data[col.field];
+                        
+                        // Debug first few entries
+                        if (data.id <= 8) {
+                            console.log('Entry', data.id, 'field', col.field, 'value:', value);
+                        }
+                        
                         if (value && value.length > 50) {
                             return '<div class="text-truncate" style="max-width: ' + (col.width - 20) + 'px;" title="' + 
                                    value + '">' + value + '</div>';
@@ -263,7 +294,7 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
                 });
             });
             
-            // Add username column (like in module)
+            // Add username column (simplified)
             enhancedColumns.push({
                 title: "Author",
                 field: "username", 
@@ -274,12 +305,13 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
                 editable: false,
                 formatter: function(cell) {
                     var row = cell.getRow();
-                    if (row.getData().isSeparator) {
+                    var data = row.getData();
+                    
+                    if (data.isSeparator) {
                         return '';
                     }
                     
                     var value = cell.getValue();
-                    var data = row.getData();
                     if (data.ismaster === 1) {
                         return '<i class="fa fa-star text-warning" title="Master entry"></i> ' + value;
                     }
@@ -287,30 +319,76 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
                 }
             });
 
-            // Add actions column
-            enhancedColumns.push({
-                title: "Actions",
-                field: "actions",
-                width: 120,
-                headerSort: false,
-                formatter: function(cell) {
-                    var row = cell.getRow();
-                    var data = row.getData();
-                    
-                    if (data.isSeparator) {
-                        return '';
-                    }
-                    
-                    return '<div class="btn-group btn-group-sm" role="group">' +
-                           '<a href="' + data.view_url + '" class="btn btn-outline-primary btn-sm" title="View Entry">' +
-                           '<i class="fa fa-eye"></i></a>' +
-                           '<a href="' + data.edit_url + '" class="btn btn-outline-secondary btn-sm" title="Edit in Activity" target="_blank">' +
-                           '<i class="fa fa-edit"></i></a>' +
-                           '</div>';
-                }
-            });
-
             return enhancedColumns;
+        },
+
+        /**
+         * Toggle row selection
+         */
+        toggleRowSelection: function(entryId) {
+            var checkbox = $('input[data-entry-id="' + entryId + '"]');
+            var isSelected = checkbox.prop('checked');
+            
+            if (isSelected) {
+                selectedRows = selectedRows.filter(function(id) {
+                    return id !== entryId;
+                });
+            } else {
+                selectedRows.push(entryId);
+            }
+            
+            checkbox.prop('checked', !isSelected);
+            this.updateSelectionUI();
+        },
+
+        /**
+         * Update selection UI
+         */
+        updateSelectionUI: function() {
+            var count = selectedRows.length;
+            var selectionInfo = $('.selection-info');
+            
+            if (count > 0) {
+                if (selectionInfo.length === 0) {
+                    $('.table-controls').prepend(
+                        '<div class="selection-info alert alert-info py-2 px-3 me-2">' +
+                        '<span class="selection-count">' + count + '</span> entries selected ' +
+                        '<button class="btn btn-sm btn-primary ms-2" id="generate-docs">Generate Documents</button>' +
+                        '<button class="btn btn-sm btn-secondary ms-1" id="clear-selection">Clear</button>' +
+                        '</div>'
+                    );
+                    
+                    // Bind events
+                    $('#generate-docs').on('click', this.generateDocuments.bind(this));
+                    $('#clear-selection').on('click', this.clearSelection.bind(this));
+                } else {
+                    selectionInfo.find('.selection-count').text(count);
+                }
+            } else {
+                selectionInfo.remove();
+            }
+        },
+
+        /**
+         * Clear selection
+         */
+        clearSelection: function() {
+            selectedRows = [];
+            $('.entry-checkbox').prop('checked', false);
+            this.updateSelectionUI();
+        },
+
+        /**
+         * Generate documents (placeholder)
+         */
+        generateDocuments: function() {
+            if (selectedRows.length === 0) {
+                alert('Please select entries first');
+                return;
+            }
+            
+            console.log('Generating documents for entries:', selectedRows);
+            alert('Document generation will be implemented here\nSelected entries: ' + selectedRows.length);
         },
 
         /**
@@ -320,9 +398,8 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
             var self = this;
             
             var enhancedColumns = this.prepareColumns(columns);
-            var currentUsername = this.getUsernameFromResponse(allData);
 
-            // Initialize table (similar to module)
+            // Initialize table
             table = new window.Tabulator("#valuemaps-table", {
                 data: processedData,
                 columns: enhancedColumns,
@@ -333,7 +410,7 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
                 paginationSizeSelector: [10, 20, 50, 100],
                 movableColumns: true,
                 resizableRows: false,
-                selectable: false, // No selection in subplugin
+                selectable: false, // We handle selection manually
                 tooltips: true,
                 placeholder: "No entries to display",
                 persistence: {
@@ -366,18 +443,21 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
                         row.getElement().style.backgroundColor = '#f8f9fa';
                         row.getElement().style.fontWeight = 'bold';
                         row.getElement().style.borderTop = '2px solid #dee2e6';
+                        row.getElement().style.borderBottom = '1px solid #dee2e6';
                         
-                        // Set content for separator row
+                        // Set content for separator row - show title across all columns
                         var cells = row.getCells();
-                        if (cells.length > 0) {
-                            var firstCell = cells[0];
-                            firstCell.getElement().colSpan = cells.length;
-                            firstCell.getElement().innerHTML = '<i class="fa fa-folder-open me-2"></i>' + data.groupTitle;
+                        if (cells.length > 1) {
+                            // First cell gets the button, second cell gets the title
+                            cells[1].getElement().innerHTML = '<i class="fa fa-folder-open me-2"></i>' + data.groupTitle;
+                            cells[1].getElement().style.fontWeight = 'bold';
                             
-                            // Hide other cells in separator row
-                            for (var i = 1; i < cells.length; i++) {
+                            // Hide remaining cells
+                            for (var i = 2; i < cells.length; i++) {
                                 cells[i].getElement().style.display = 'none';
                             }
+                            // Expand second cell to cover hidden ones
+                            cells[1].getElement().colSpan = cells.length - 1;
                         }
                         return;
                     }
@@ -394,14 +474,11 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
             table.on("tableBuilt", function() {
                 console.log('[valuemaps_manager] Table built successfully');
                 
-                // Set default filter to show only current user's entries (like module)
-                table.setHeaderFilterValue("username", currentUsername);
-                
                 // Add user filter toggle
-                self.addUserFilterToggle(table, currentUsername);
+                self.addUserFilterToggle(table);
             });
 
-            // Double click to edit (like module)
+            // Double click to edit (for data rows only)
             table.on("rowDblClick", function(e, row) {
                 var data = row.getData();
                 if (!data.isSeparator) {
@@ -409,38 +486,58 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
                 }
             });
 
-            // Make manager globally available for button callbacks
+            // Make manager globally available
             window.valuemapsManager = this;
         },
 
         /**
-         * Add user filter toggle button (like in module)
+         * Add user filter toggle button
          */
-        addUserFilterToggle: function(table, currentUsername) {
+        addUserFilterToggle: function(table) {
+            var self = this;
             var toolbar = $('.card-header .table-controls');
             if (toolbar.length === 0) {
                 return;
             }
 
-            toolbar.prepend('<button type="button" class="btn btn-sm btn-outline-info ms-2" id="user-filter-toggle">' +
-                           '<i class="fa fa-user"></i> My Entries</button>');
+            toolbar.append('<button type="button" class="btn btn-sm btn-outline-info ms-2" id="user-filter-toggle">' +
+                          '<i class="fa fa-user"></i> My Entries</button>');
             
             var showingOnlyMine = true;
             $('#user-filter-toggle').on('click', function() {
                 var $btn = $(this);
                 if (showingOnlyMine) {
-                    // Show all entries
+                    // Show all entries (including separators)
                     table.clearHeaderFilter("username");
                     $btn.html('<i class="fa fa-users"></i> All Entries');
                     $btn.removeClass('btn-outline-info').addClass('btn-outline-secondary');
                     showingOnlyMine = false;
                 } else {
-                    // Filter to user entries only
-                    table.setHeaderFilterValue("username", currentUsername);
+                    // Show only user entries but keep separators visible
+                    self.filterToUserEntries(table);
                     $btn.html('<i class="fa fa-user"></i> My Entries');
                     $btn.removeClass('btn-outline-secondary').addClass('btn-outline-info');
                     showingOnlyMine = true;
                 }
+            });
+            
+            // Start with user entries filtered
+            this.filterToUserEntries(table);
+        },
+
+        /**
+         * Filter to user entries but keep separators
+         */
+        filterToUserEntries: function(table) {
+            var currentUserId = M.cfg.userid;
+            
+            table.setFilter(function(data) {
+                // Always show separators
+                if (data.isSeparator) {
+                    return true;
+                }
+                // Show only current user's entries
+                return data.userid == currentUserId;
             });
         },
 
@@ -454,36 +551,52 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
             
             var courseFilter = $('#filter-course').val();
             var activityFilter = $('#filter-activity').val();
-            var typeFilter = $('#filter-type').val();
             var searchFilter = $('#search-entries').val();
 
-            // Clear existing filters
-            table.clearFilter();
-
-            // Apply filters (skip separator rows)
+            // Build filter function
             var filters = [];
             
             if (courseFilter) {
-                filters.push({field: "course_name", type: "=", value: courseFilter});
+                filters.push(function(data) {
+                    return data.isSeparator || data.course_name === courseFilter;
+                });
             }
+            
             if (activityFilter) {
-                filters.push({field: "activity_name", type: "=", value: activityFilter});
+                filters.push(function(data) {
+                    return data.isSeparator || data.activity_name === activityFilter;
+                });
             }
             
             if (searchFilter) {
-                filters.push([
-                    {field: "course_name", type: "like", value: searchFilter},
-                    {field: "activity_name", type: "like", value: searchFilter}
-                ]);
+                filters.push(function(data) {
+                    if (data.isSeparator) {
+                        return data.groupTitle.toLowerCase().includes(searchFilter.toLowerCase());
+                    }
+                    // Search in various fields
+                    var searchFields = ['course_name', 'activity_name', 'username'];
+                    return searchFields.some(function(field) {
+                        var value = data[field];
+                        return value && value.toLowerCase().includes(searchFilter.toLowerCase());
+                    });
+                });
             }
 
-            // Add filter to exclude separator rows from normal filtering
-            filters.push(function(data) {
-                return !data.isSeparator;
-            });
-
+            // Apply all filters
             if (filters.length > 0) {
-                table.setFilter(filters);
+                table.setFilter(function(data) {
+                    return filters.every(function(filter) {
+                        return filter(data);
+                    });
+                });
+            } else {
+                // If no filters, show according to user toggle
+                var isShowingAll = $('#user-filter-toggle').hasClass('btn-outline-secondary');
+                if (isShowingAll) {
+                    table.clearFilter();
+                } else {
+                    this.filterToUserEntries(table);
+                }
             }
         },
 
@@ -491,14 +604,17 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
          * Clear all filters
          */
         clearFilters: function() {
-            // Clear form filters
-            $('#filter-course, #filter-activity, #filter-type').val('');
+            $('#filter-course, #filter-activity').val('');
             $('#search-entries').val('');
             
-            // Clear table filters
             if (table) {
-                table.clearFilter();
-                table.clearHeaderFilter();
+                // Reset to user entries view
+                this.filterToUserEntries(table);
+                
+                // Reset user toggle
+                var $btn = $('#user-filter-toggle');
+                $btn.html('<i class="fa fa-user"></i> My Entries');
+                $btn.removeClass('btn-outline-secondary').addClass('btn-outline-info');
             }
         },
 
@@ -514,11 +630,8 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
                 '<i class="fa fa-file-csv me-2"></i>Export as CSV</button>' +
                 '<button class="dropdown-item" data-format="json">' +
                 '<i class="fa fa-file-code me-2"></i>Export as JSON</button>' +
-                '<button class="dropdown-item" data-format="xlsx">' +
-                '<i class="fa fa-file-excel me-2"></i>Export as Excel</button>' +
                 '</div>');
 
-            // Position menu
             var exportBtn = $('#export-data');
             var offset = exportBtn.offset();
             exportMenu.css({
@@ -528,14 +641,12 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
                 'z-index': 1050
             });
 
-            // Handle clicks
             exportMenu.find('[data-format]').on('click', function() {
                 var format = $(this).data('format');
                 self.exportData(format);
                 exportMenu.remove();
             });
 
-            // Remove on outside click
             $(document).one('click', function() {
                 exportMenu.remove();
             });
@@ -552,8 +663,6 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
             }
 
             var filename = 'valuemap_entries_' + new Date().toISOString().slice(0,10);
-
-            // Custom download to exclude separator rows
             var exportData = table.getData().filter(function(row) {
                 return !row.isSeparator;
             });
@@ -569,8 +678,6 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
                 link.download = filename + '.json';
                 link.click();
                 URL.revokeObjectURL(url);
-            } else if (format === 'xlsx') {
-                table.download("xlsx", filename + ".xlsx", {sheetName: "Value Map Entries"}, "active");
             }
         },
 
@@ -592,71 +699,6 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
                     table.redraw(true);
                 }
             }
-        },
-
-        /**
-         * Show entry details modal
-         */
-        showEntryDetails: function(entryId) {
-            var entryData = allData.find(function(entry) {
-                return entry.id === entryId && !entry.isSeparator;
-            });
-
-            if (!entryData) {
-                return;
-            }
-
-            var modalHtml = '<div class="modal fade" id="entryDetailsModal" tabindex="-1">' +
-                '<div class="modal-dialog modal-lg">' +
-                '<div class="modal-content">' +
-                '<div class="modal-header">' +
-                '<h5 class="modal-title">Entry Details</h5>' +
-                '<button type="button" class="btn-close" data-bs-dismiss="modal"></button>' +
-                '</div>' +
-                '<div class="modal-body">' +
-                '<div class="row mb-3">' +
-                '<div class="col-md-6"><strong>Course:</strong><br>' + entryData.course_name + '</div>' +
-                '<div class="col-md-6"><strong>Activity:</strong><br>' + entryData.activity_name + '</div>' +
-                '</div>' +
-                '<div class="row mb-3">' +
-                '<div class="col-md-6"><strong>Author:</strong><br>' + entryData.user_fullname + '</div>' +
-                '</div>' +
-                '<div class="row mb-3">' +
-                '<div class="col-md-6"><strong>Created:</strong><br>' + entryData.timecreated_formatted + '</div>' +
-                '<div class="col-md-6"><strong>Modified:</strong><br>' + entryData.timemodified_formatted + '</div>' +
-                '</div>' +
-                '</div>' +
-                '<div class="modal-footer">' +
-                '<a href="' + entryData.edit_url + '" class="btn btn-primary" target="_blank">' +
-                '<i class="fa fa-edit"></i> Edit in Activity</a>' +
-                '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>' +
-                '</div>' +
-                '</div>' +
-                '</div>' +
-                '</div>';
-
-            // Remove existing modal
-            $('#entryDetailsModal').remove();
-            
-            // Add and show new modal
-            $('body').append(modalHtml);
-            var modal = new bootstrap.Modal(document.getElementById('entryDetailsModal'));
-            modal.show();
-        },
-
-        /**
-         * Format type name for display
-         */
-        formatTypeName: function(type) {
-            var names = {
-                'customer_profile': 'Customer Profile',
-                'value_proposition': 'Value Proposition',
-                'pain_analysis': 'Pain Analysis', 
-                'value_map': 'Value Map',
-                'general': 'General',
-                'unknown': 'Unknown'
-            };
-            return names[type] || type;
         },
 
         /**

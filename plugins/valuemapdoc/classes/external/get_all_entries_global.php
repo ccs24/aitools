@@ -345,15 +345,16 @@ class get_all_entries_global extends external_api {
             'clientname' => $entry->clientname ?? ''
         ];
 
-        // Determine entry type and preview
-        $edit_url =  new \moodle_url('/mod/valuemapdoc/edit.php', [
-                'id' => $activity['cmid'],
-                'entryid' => $entry->id
-            ]);
+        // Create URL objects first
+        $edit_url = new \moodle_url('/mod/valuemapdoc/edit.php', [
+            'id' => $activity['cmid'],
+            'entryid' => $entry->id
+        ]);
+        
         $view_url = new \moodle_url('/mod/valuemapdoc/view.php', [
-                'id' => $activity['cmid'],
-                'entryid' => $entry->id
-            ]);
+            'id' => $activity['cmid'],
+            'entryid' => $entry->id
+        ]);
 
         return [
             'id' => (int)$entry->id,
@@ -363,21 +364,42 @@ class get_all_entries_global extends external_api {
             'activity_name' => $activity['activity_name'],
             'activity_id' => (int)$activity['instance'],
             'cmid' => (int)$entry->cmid,
+            // Add individual fields directly for JavaScript access
+            'market' => $entry->market ?? '',
+            'industry' => $entry->industry ?? '',
+            'role' => $entry->role ?? '',
+            'businessgoal' => $entry->businessgoal ?? '',
+            'strategy' => $entry->strategy ?? '',
+            'difficulty' => $entry->difficulty ?? '',
+            'situation' => $entry->situation ?? '',
+            'statusquo' => $entry->statusquo ?? '',
+            'coi' => $entry->coi ?? '',
+            'differentiator' => $entry->differentiator ?? '',
+            'impact' => $entry->impact ?? '',
+            'newstate' => $entry->newstate ?? '',
+            'successmetric' => $entry->successmetric ?? '',
+            'impactstrategy' => $entry->impactstrategy ?? '',
+            'impactbusinessgoal' => $entry->impactbusinessgoal ?? '',
+            'impactothers' => $entry->impactothers ?? '',
+            'proof' => $entry->proof ?? '',
+            'time2results' => $entry->time2results ?? '',
+            'quote' => $entry->quote ?? '',
+            'clientname' => $entry->clientname ?? '',
             'entry_data' => json_encode($entry_data),
-            'timecreated' => (int)$entry->timemodified, // Using timemodified as timecreated
+            'timecreated' => (int)$entry->timemodified,
             'timecreated_formatted' => userdate($entry->timemodified, get_string('strftimedatefullshort')),
             'timecreated_relative' => self::get_relative_time($entry->timemodified),
             'timemodified' => (int)$entry->timemodified,
             'timemodified_formatted' => userdate($entry->timemodified, get_string('strftimedatefullshort')),
             'timemodified_relative' => self::get_relative_time($entry->timemodified),
-            'edit_url' => (string) $edit_url,
-            'view_url' => (string) $view_url,
+            'edit_url' => (string)$edit_url,
+            'view_url' => (string)$view_url,
             'username' => $entry->username,
             'user_fullname' => fullname($entry),
-            'ismaster' => (int)$entry->ismaster
+            'ismaster' => (int)$entry->ismaster,
+            'userid' => (int)$entry->userid
         ];
     }
-
 
     /**
      * Get relative time string
@@ -418,7 +440,27 @@ class get_all_entries_global extends external_api {
                     'activity_name' => new external_value(PARAM_TEXT, 'Activity name'),
                     'activity_id' => new external_value(PARAM_INT, 'Activity ID'),
                     'cmid' => new external_value(PARAM_INT, 'Course module ID'),
-                    'entry_data' => new external_value(PARAM_RAW, 'Entry data'),
+                    'market' => new external_value(PARAM_TEXT, 'Market', VALUE_OPTIONAL),
+                    'industry' => new external_value(PARAM_TEXT, 'Industry', VALUE_OPTIONAL),
+                    'role' => new external_value(PARAM_TEXT, 'Role', VALUE_OPTIONAL),
+                    'businessgoal' => new external_value(PARAM_TEXT, 'Business Goal', VALUE_OPTIONAL),
+                    'strategy' => new external_value(PARAM_TEXT, 'Strategy', VALUE_OPTIONAL),
+                    'difficulty' => new external_value(PARAM_TEXT, 'Difficulty', VALUE_OPTIONAL),
+                    'situation' => new external_value(PARAM_TEXT, 'Situation', VALUE_OPTIONAL),
+                    'statusquo' => new external_value(PARAM_TEXT, 'Status Quo', VALUE_OPTIONAL),
+                    'coi' => new external_value(PARAM_TEXT, 'Cost of Inaction', VALUE_OPTIONAL),
+                    'differentiator' => new external_value(PARAM_TEXT, 'Differentiator', VALUE_OPTIONAL),
+                    'impact' => new external_value(PARAM_TEXT, 'Impact', VALUE_OPTIONAL),
+                    'newstate' => new external_value(PARAM_TEXT, 'New State', VALUE_OPTIONAL),
+                    'successmetric' => new external_value(PARAM_TEXT, 'Success Metric', VALUE_OPTIONAL),
+                    'impactstrategy' => new external_value(PARAM_TEXT, 'Impact Strategy', VALUE_OPTIONAL),
+                    'impactbusinessgoal' => new external_value(PARAM_TEXT, 'Impact Business Goal', VALUE_OPTIONAL),
+                    'impactothers' => new external_value(PARAM_TEXT, 'Impact Others', VALUE_OPTIONAL),
+                    'proof' => new external_value(PARAM_TEXT, 'Proof', VALUE_OPTIONAL),
+                    'time2results' => new external_value(PARAM_TEXT, 'Time to Results', VALUE_OPTIONAL),
+                    'quote' => new external_value(PARAM_TEXT, 'Quote', VALUE_OPTIONAL),
+                    'clientname' => new external_value(PARAM_TEXT, 'Client Name', VALUE_OPTIONAL),
+                    'entry_data' => new external_value(PARAM_RAW, 'Entry data JSON'),
                     'timecreated' => new external_value(PARAM_INT, 'Creation timestamp'),
                     'timecreated_formatted' => new external_value(PARAM_TEXT, 'Formatted creation time'),
                     'timecreated_relative' => new external_value(PARAM_TEXT, 'Relative creation time'),
@@ -429,7 +471,8 @@ class get_all_entries_global extends external_api {
                     'view_url' => new external_value(PARAM_URL, 'View URL'),
                     'username' => new external_value(PARAM_TEXT, 'Username'),
                     'user_fullname' => new external_value(PARAM_TEXT, 'User full name'),
-                    'ismaster' => new external_value(PARAM_INT, 'Is master entry')
+                    'ismaster' => new external_value(PARAM_INT, 'Is master entry'),
+                    'userid' => new external_value(PARAM_INT, 'User ID')
                 ])
             ),
             'statistics' => new external_single_structure([
