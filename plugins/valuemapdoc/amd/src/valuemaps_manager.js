@@ -28,7 +28,6 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
     var table = null;
     var config = window.valuemapsConfig || {};
     var allData = [];
-    var processedData = [];
     var selectedRows = [];
     var currentStatistics = {};
 
@@ -101,10 +100,6 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
                 self.applyFilters();
             });
 
-            $('#search-entries').on('input', function() {
-                self.applyFilters();
-            });
-
             // Retry loading
             $('#retry-loading').on('click', function() {
                 self.init();
@@ -114,6 +109,7 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
             $('#toggle-fullscreen').on('click', function() {
                 self.toggleFullscreen();
             });
+            
         },
 
         /**
@@ -141,8 +137,8 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
                 self.populateFilterOptions(currentStatistics);
 
                 // Use columns from DOM (static configuration)
-                console.log('Using static columns from DOM:', columns);
-                console.log('Static columns count:', columns.length);
+//                console.log('Using static columns from DOM:', columns);
+//                console.log('Static columns count:', columns.length);
 
                 if (allData.length > 0) {
                     var groupedData = self.processDataWithNativeGrouping(allData);
@@ -156,55 +152,6 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
                 self.showErrorState(error.message || 'Failed to load entries');
                 Notification.exception(error);
             });
-        },
-
-        /**
-         * Build user-specific columns based on field level (7/13/20 fields)
-         * @param {Array} userFields Array of field names for user's level
-         * @param {Object} levelConfig User's level configuration
-         * @return {Array} Column definitions for Tabulator
-         */
-        buildUserColumns: function(userFields, levelConfig) {
-            // Field to title mapping
-            var fieldTitles = {
-                'market': 'Market',
-                'industry': 'Industry', 
-                'role': 'Role',
-                'businessgoal': 'Business Goal',
-                'strategy': 'Strategy',
-                'difficulty': 'Difficulty',
-                'situation': 'Situation',
-                'statusquo': 'Status Quo',
-                'coi': 'Cost of Inaction',
-                'differentiator': 'Differentiator',
-                'impact': 'Impact',
-                'newstate': 'New State',
-                'successmetric': 'Success Metric',
-                'impactstrategy': 'Impact Strategy',
-                'impactbusinessgoal': 'Impact Business Goal',
-                'impactothers': 'Impact Others',
-                'proof': 'Proof',
-                'time2results': 'Time to Results',
-                'quote': 'Quote',
-                'clientname': 'Client Name'
-            };
-
-            var columns = [];
-
-            // Build columns from user fields
-            userFields.forEach(function(fieldName) {
-                columns.push({
-                    title: fieldTitles[fieldName] || fieldName,
-                    field: fieldName,
-                    hozAlign: 'left',
-                    headerSort: true,
-                    width: 150,
-                    headerFilter: 'input',
-                    headerFilterPlaceholder: 'Filter...'
-                });
-            });
-
-            return columns;
         },
 
         /**
@@ -379,7 +326,7 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
          * @param {Array} data Table data
          */
         initializeTableWithGrouping: function(userColumns, data) {
-            var self = this;
+            //var self = this;
 
             if (table) {
                 table.destroy();
@@ -410,7 +357,7 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
                 
                 // Native grouping approach
                 groupBy: "course_activity_group",
-                groupHeader: function(value, count, data, group) {
+                groupHeader: function(value, count, data) {
                     // Extract course and activity info from first item
                     var firstItem = data[0];
                     var viewUrl = firstItem.view_activity_url || (M.cfg.wwwroot + '/mod/valuemapdoc/view.php?id=' + firstItem.cmid);
@@ -431,6 +378,7 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
             });
 
             this.initializeSelectionTracking();
+            this.searchEvents(enhancedColumns);
         },
 
         /**
@@ -516,6 +464,36 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
         },
 
         /**
+         * Bind search event handlers
+         */
+        searchEvents: function(columns) {
+            if (!table) {
+                console.log('Table not initialized for searchEvents');
+                return;
+            }
+            var self = this;
+            var searchInput = $('#search-entries').val();
+
+            // Apply search filter across multiple fields
+            if (searchInput) {
+                    searchInput.addEventListener('input', function() {
+                        var filterValue = this.value.toLowerCase();
+                        console.log('Applying search filter:', filterValue);
+                        
+                        // Apply filter across all text columns
+                        table.setFilter(function(data) {
+                            return columns.some(function(col) {
+                                var field = col.field;
+                                var fieldValue = data[field];
+                                console.log('Checking field:', field, 'Value:', fieldValue);
+                                return fieldValue && fieldValue.toString().toLowerCase().includes(filterValue);
+                            });
+                        });
+                    });
+                }
+        },
+
+        /**
          * Apply filters to the table with cross-course context
          */
         applyFilters: function() {
@@ -529,7 +507,7 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
             // Get filter values
             var courseFilter = $('#filter-course').val();
             var activityFilter = $('#filter-activity').val();
-            var searchFilter = $('#search-entries').val();
+            
 
             // Apply course filter
             if (courseFilter) {
@@ -541,18 +519,7 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
                 table.addFilter("activity_name", "=", activityFilter);
             }
 
-            // Apply search filter across multiple fields
-            if (searchFilter) {
-                table.addFilter([
-                    {field: "market", type: "like", value: searchFilter},
-                    {field: "industry", type: "like", value: searchFilter},
-                    {field: "role", type: "like", value: searchFilter},
-                    {field: "businessgoal", type: "like", value: searchFilter},
-                    {field: "course_name", type: "like", value: searchFilter},
-                    {field: "activity_name", type: "like", value: searchFilter},
-                    {field: "username", type: "like", value: searchFilter}
-                ]);
-            }
+            
         },
 
         /**
