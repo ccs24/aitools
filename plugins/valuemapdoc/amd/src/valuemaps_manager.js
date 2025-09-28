@@ -32,8 +32,6 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
     var selectedRows = [];
     var currentStatistics = {};
 
-    // CONFIGURATION: Choose display method
-    var USE_NATIVE_GROUPING = false; // Set to true for OPTION 2, false for OPTION 1
 
     return {
         /**
@@ -137,14 +135,13 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
                 // Store raw data
                 allData = data.entries || [];
                 currentStatistics = data.statistics || {};
-                console.log('Loaded entries:', allData.length);
-                console.log('Statistics:', currentStatistics);     
-                console.log('Columns:', columns);
 
                 // Update UI with statistics
                 self.updateStatistics(currentStatistics);
                 self.populateFilterOptions(currentStatistics);
 
+                // Use columns from DOM (static configuration)
+                console.log('Using static columns from DOM:', columns);
                 console.log('Static columns count:', columns.length);
 
                 if (allData.length > 0) {
@@ -208,59 +205,6 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
             });
 
             return columns;
-        },
-
-        /**
-         * OPTION 1: Process data with custom group separators (CSS positioning)
-         * @param {Array} entries Array of entries from server
-         * @return {Array} Processed data with group separators
-         */
-        processDataWithGroupSeparators: function(entries) {
-            if (entries.length === 0) {
-                return [];
-            }
-
-            var processedData = [];
-            var currentGroup = null;
-
-            // Sort entries by course name, then activity name, then modification time
-            entries.sort(function(a, b) {
-                if (a.course_name !== b.course_name) {
-                    return a.course_name.localeCompare(b.course_name);
-                }
-                if (a.activity_name !== b.activity_name) {
-                    return a.activity_name.localeCompare(b.activity_name);
-                }
-                return b.timemodified - a.timemodified; // Newest first
-            });
-
-            entries.forEach(function(entry) {
-                var groupKey = entry.course_name + ' → ' + entry.activity_name;
-
-                // Add group separator when group changes
-                if (currentGroup !== groupKey) {
-                    processedData.push({
-                        id: 'separator_' + processedData.length,
-                        isSeparator: true,
-                        groupTitle: groupKey,
-                        course_name: entry.course_name,
-                        course_shortname: entry.course_shortname,
-                        activity_name: entry.activity_name,
-                        cmid: entry.cmid,
-                        course_id: entry.course_id,
-                        activity_id: entry.activity_id,
-                        // Quick action URLs
-                        view_activity_url: M.cfg.wwwroot + '/mod/valuemapdoc/view.php?id=' + entry.cmid,
-                        course_url: M.cfg.wwwroot + '/course/view.php?id=' + entry.course_id
-                    });
-                    currentGroup = groupKey;
-                }
-
-                // Add the actual entry
-                processedData.push(entry);
-            });
-
-            return processedData;
         },
 
         /**
@@ -417,7 +361,7 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
                     headerSort: true,
                     width: col.width || 150,
                     headerFilter: "input",
-                    //headerFilterPlaceholder: "Filter " + col.title + "...",
+                    headerFilterPlaceholder: "Filter " + col.title + "...",
                     editable: false,
                     formatter: function(cell) {
                         return cell.getRow().getData()[col.field] || '';
@@ -428,89 +372,6 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
             return enhancedColumns;
         },
 
-        /**
-         * OPTION 1: Initialize table with custom separators (CSS positioning)
-         * @param {Array} userColumns User's field columns (7/13/20)
-         * @param {Array} data Table data with separators
-         */
-        initializeTable: function(userColumns, data) {
-            var self = this;
-
-            if (table) {
-                table.destroy();
-            }
-
-            var enhancedColumns = this.prepareColumns(userColumns);
-
-            // eslint-disable-next-line no-undef
-            table = new Tabulator("#valuemaps-table", {
-                data: data,
-                columns: enhancedColumns,
-                layout: "fitColumns",
-                responsiveLayout: "hide",
-                placeholder: "No entries found",
-                pagination: "local",
-                paginationSize: 25,
-                paginationSizeSelector: [10, 25, 50, 100],
-                movableColumns: true,
-                resizableRows: false,
-                selectable: false,
-                tooltipsHeader: true,
-                
-                // Custom separator row formatting with CSS positioning
-                rowFormatter: function(row) {
-                    var data = row.getData();
-                    if (data.isSeparator) {
-                        var element = row.getElement();
-                        element.style.backgroundColor = "#f8f9fa";
-                        element.style.fontWeight = "bold";
-                        element.style.borderTop = "2px solid #007bff";
-                        element.style.cursor = "pointer";
-                        element.style.position = "relative";
-                        
-                        // Apply formatting after DOM is ready
-                        setTimeout(function() {
-                            var cells = row.getCells();
-                            if (cells.length > 0) {
-                                // Style the first cell to span full width
-                                var firstCellElement = cells[0].getElement();
-                                firstCellElement.style.position = "absolute";
-                                firstCellElement.style.left = "0";
-                                firstCellElement.style.right = "0";
-                                firstCellElement.style.width = "100%";
-                                firstCellElement.style.zIndex = "10";
-                                firstCellElement.style.backgroundColor = "#f8f9fa";
-                                firstCellElement.style.padding = "8px 12px";
-                                firstCellElement.style.borderTop = "2px solid #007bff";
-                                firstCellElement.innerHTML = '<span style="font-weight: bold; color: #007bff;">' + 
-                                                           data.groupTitle + '</span>';
-                                
-                                // Hide all other cells
-                                for (var i = 1; i < cells.length; i++) {
-                                    cells[i].getElement().style.visibility = "hidden";
-                                }
-                            }
-                        }, 10);
-                        
-                        // Click handler for separator
-                        element.onclick = function() {
-                            window.open(data.view_activity_url, '_blank');
-                        };
-                    }
-                }
-            });
-
-            // Double-click to edit entries
-            table.on("rowDblClick", function(e, row) {
-                var data = row.getData();
-                if (!data.isSeparator) {
-                    window.open(data.edit_url, '_blank');
-                }
-            });
-
-            // Initialize selection tracking
-            this.initializeSelectionTracking();
-        },
 
         /**
          * OPTION 2: Initialize table with native Tabulator grouping
@@ -525,21 +386,26 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
             }
 
             var enhancedColumns = this.prepareColumnsForGrouping(userColumns);
+            
+            // DEBUG: Sprawdź kolumny przed utworzeniem tabeli
+            console.log('Enhanced columns before Tabulator:', enhancedColumns);
+            console.log('Enhanced columns count:', enhancedColumns.length);
+            console.log('First few columns:', enhancedColumns.slice(0, 5));
 
             // eslint-disable-next-line no-undef
             table = new Tabulator("#valuemaps-table", {
                 data: data,
                 columns: enhancedColumns,
-                layout: "fitColumns",
-                responsiveLayout: "hide",
+                //layout: "fitColumns",
+                //responsiveLayout: "hide",
                 placeholder: "No entries found",
                 pagination: "local",
                 paginationSize: 25,
                 paginationSizeSelector: [10, 25, 50, 100],
-                movableColumns: true,
-                resizableRows: false,
-                selectable: false,
-                tooltipsHeader: true,
+                //movableColumns: true,
+                //resizableRows: false,
+                //selectable: false,
+                //tooltipsHeader: true,
                 
                 // Native grouping approach
                 groupBy: "course_activity_group",
