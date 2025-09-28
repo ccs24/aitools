@@ -7,21 +7,8 @@
     <div class="valuemaps-header mb-4">
         <div class="row align-items-center">
             <div class="col-md-8">
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb">
-                        <li class="breadcrumb-item">
-                            <a href="{{{back_url}}}">
-                                <i class="fa fa-robot"></i> {{#str}}aitools, local_aitools{{/str}}
-                            </a>
-                        </li>
-                        <li class="breadcrumb-item active">{{#str}}my_valuemaps, aitoolsub_valuemapdoc{{/str}}</li>
-                    </ol>
-                </nav>
+             
                 
-                <h1 class="h2 mb-2">
-                    <i class="fa fa-sitemap text-primary me-2"></i>
-                    {{#str}}my_valuemaps_dashboard, aitoolsub_valuemapdoc{{/str}}
-                </h1>
                 <p class="text-muted mb-0">
                     {{#str}}valuemaps_dashboard_subtitle, aitoolsub_valuemapdoc{{/str}}
                 </p>
@@ -33,16 +20,6 @@
                         <i class="fa fa-cog me-1"></i>
                         Field Level: <strong>{{level_name}}</strong> ({{fields_count}} fields)
                     </small>
-                    
-                    <!-- Simple Field Level Form -->
-                    <form method="get" class="d-inline-block ms-3">
-                        <small class="text-muted me-2">Change to:</small>
-                        <select name="field_level" class="form-select form-select-sm d-inline-block" style="width: auto;" onchange="this.form.submit()">
-                            <option value="basic" {{#field_level.is_basic}}selected{{/field_level.is_basic}}>Basic (7 fields)</option>
-                            <option value="valueproposition" {{#field_level.is_valueproposition}}selected{{/field_level.is_valueproposition}}>Value Proposition (13 fields)</option>
-                            <option value="marketing" {{#field_level.is_marketing}}selected{{/field_level.is_marketing}}>Marketing (20 fields)</option>
-                        </select>
-                    </form>
                 </div>
                 {{/field_level}}
             </div>
@@ -95,19 +72,6 @@
                     </h3>
                     <small>{{#str}}activities_with_entries, aitoolsub_valuemapdoc{{/str}}</small>
                 </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Quick Info Alert -->
-    <div class="alert alert-info mb-4">
-        <div class="d-flex align-items-start">
-            <i class="fa fa-info-circle fa-lg me-3 mt-1"></i>
-            <div>
-                <strong>{{#str}}view_only_mode, aitoolsub_valuemapdoc{{/str}}</strong>
-                <p class="mb-0 mt-1">
-                    {{#str}}view_only_description, aitoolsub_valuemapdoc{{/str}}
-                </p>
             </div>
         </div>
     </div>

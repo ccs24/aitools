@@ -388,24 +388,25 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
             var enhancedColumns = this.prepareColumnsForGrouping(userColumns);
             
             // DEBUG: Sprawdź kolumny przed utworzeniem tabeli
-            console.log('Enhanced columns before Tabulator:', enhancedColumns);
-            console.log('Enhanced columns count:', enhancedColumns.length);
-            console.log('First few columns:', enhancedColumns.slice(0, 5));
+//            console.log('Enhanced columns before Tabulator:', enhancedColumns);
+//            console.log('Enhanced columns count:', enhancedColumns.length);
+//            console.log('First few columns:', enhancedColumns.slice(0, 5));
 
             // eslint-disable-next-line no-undef
             table = new Tabulator("#valuemaps-table", {
                 data: data,
                 columns: enhancedColumns,
-                //layout: "fitColumns",
+                height: "100%",
+                layout: "fitColumns",
                 //responsiveLayout: "hide",
                 placeholder: "No entries found",
                 pagination: "local",
                 paginationSize: 25,
                 paginationSizeSelector: [10, 25, 50, 100],
-                //movableColumns: true,
-                //resizableRows: false,
-                //selectable: false,
-                //tooltipsHeader: true,
+                movableColumns: true,
+                resizableRows: false,
+                selectable: false,
+                tooltipsHeader: true,
                 
                 // Native grouping approach
                 groupBy: "course_activity_group",

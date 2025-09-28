@@ -135,6 +135,6 @@ $renderer = $PAGE->get_renderer('aitoolsub_valuemapdoc');
 echo $renderer->render_from_template('aitoolsub_valuemapdoc/my_valuemaps', $template_data);
 
 // Add columns JSON for JavaScript (same pattern as module)
-echo '<script type="application/json" id="valuemap-columns">' . $template_data['columns'] . '</script>';
+//echo '<script type="application/json" id="valuemap-columns">' . $template_data['columns'] . '</script>';
 
 echo $OUTPUT->footer();
