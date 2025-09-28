@@ -74,43 +74,105 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
             }
         },
 
-        /**
-         * Bind event handlers
-         */
-        bindEvents: function() {
+    /**
+    * Bind event handlers
+    */
+    bindEvents: function() {
             var self = this;
 
-            // Refresh data
-            $('#refresh-data').on('click', function() {
-                self.init();
-            });
+        // Refresh data
+        $('#refresh-data').on('click', function() {
+            self.init();
+        });
 
-            // Export data
-            $('#export-data').on('click', function() {
-                self.showExportOptions();
-            });
+        // Export data
+        $('#export-data').on('click', function() {
+            self.showExportOptions();
+        });
 
-            // Clear filters
-            $('#clear-filters').on('click', function() {
-                self.clearFilters();
-            });
+        // Clear filters
+        $('#clear-filters').on('click', function() {
+            self.clearFilters();
+        });
 
-            // Filter controls
-            $('#filter-course, #filter-activity').on('change', function() {
-                self.applyFilters();
-            });
+        // ZMIANA: Wszystkie filtry używają tej samej funkcji
+        $('#filter-course, #filter-activity').on('change', function() {
+            self.applyAllFilters(); // Zamiast applyOtherFilters()
+        });
 
-            // Retry loading
-            $('#retry-loading').on('click', function() {
-                self.init();
-            });
+        // ZMIANA: Wyszukiwanie też używa tej samej funkcji
+        $('#search-entries').on('input', function() {
+            self.applyAllFilters(); // Zamiast custom logic
+        });
 
-            // Fullscreen toggle
-            $('#toggle-fullscreen').on('click', function() {
-                self.toggleFullscreen();
+        // Retry loading
+        $('#retry-loading').on('click', function() {
+            self.init();
+        });
+
+        // Fullscreen toggle
+        $('#toggle-fullscreen').on('click', function() {
+            self.toggleFullscreen();
+        });
+            
+    },
+
+    /**
+     * NOWA FUNKCJA: Zastosuj wszystkie filtry jednocześnie
+     * Uwzględnia: course, activity, wyszukiwanie globalne
+    */
+    applyAllFilters: function() {
+        if (!table) {
+            console.warn('Table not initialized yet');
+            return;
+        }
+
+        // Pobierz wartości wszystkich filtrów
+        var courseFilter = $("#filter-course").val();
+        var activityFilter = $("#filter-activity").val();
+        var searchFilter = $("#search-entries").val().toLowerCase().trim();
+    
+        // Jeśli nie ma żadnych filtrów, wyczyść i pokaż wszystko
+        if (!courseFilter && !activityFilter && !searchFilter) {
+            table.clearFilter();
+            return;
+        }
+    
+        // Pobierz kolumny dla wyszukiwania globalnego
+        var columns = table.getColumnDefinitions();
+    
+        // Zastosuj jeden custom filter który sprawdza wszystkie warunki
+        table.setFilter(function(data) {
+            // 1. Sprawdź filtr course
+            if (courseFilter && data.course_name !== courseFilter) {
+                return false;
+            }
+        
+            // 2. Sprawdź filtr activity
+            if (activityFilter && data.activity_name !== activityFilter) {
+                return false;
+            }
+        
+            // 3. Sprawdź wyszukiwanie globalne (jeśli jest wypełnione)
+            if (searchFilter) {
+                var matchesSearch = columns.some(function(col) {
+                var fieldValue = data[col.field];
+                return fieldValue && 
+                       fieldValue.toString().toLowerCase().includes(searchFilter);
             });
             
-        },
+            if (!matchesSearch) {
+                return false;
+            }
+        }
+        
+        // Jeśli przeszedł wszystkie testy, pokaż rekord
+        return true;
+    });
+},
+
+
+
 
         /**
          * Load data from server - use static columns from DOM
@@ -378,7 +440,7 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
             });
 
             this.initializeSelectionTracking();
-            this.searchEvents(enhancedColumns);
+            //this.searchEvents();
         },
 
         /**
@@ -463,35 +525,7 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
             }
         },
 
-        /**
-         * Bind search event handlers
-         */
-        searchEvents: function(columns) {
-            if (!table) {
-                console.log('Table not initialized for searchEvents');
-                return;
-            }
-            var self = this;
-            var searchInput = $('#search-entries').val();
-
-            // Apply search filter across multiple fields
-            if (searchInput) {
-                    searchInput.addEventListener('input', function() {
-                        var filterValue = this.value.toLowerCase();
-                        console.log('Applying search filter:', filterValue);
-                        
-                        // Apply filter across all text columns
-                        table.setFilter(function(data) {
-                            return columns.some(function(col) {
-                                var field = col.field;
-                                var fieldValue = data[field];
-                                console.log('Checking field:', field, 'Value:', fieldValue);
-                                return fieldValue && fieldValue.toString().toLowerCase().includes(filterValue);
-                            });
-                        });
-                    });
-                }
-        },
+        
 
         /**
          * Apply filters to the table with cross-course context
