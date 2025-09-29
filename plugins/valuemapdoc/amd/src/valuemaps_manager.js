@@ -292,7 +292,7 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
             enhancedColumns.push({
                 title: '',
                 field: 'checkbox',
-                width: 40,
+                width: 50,
                 hozAlign: "center",
                 headerSort: false,
                 formatter: function(cell) {
@@ -300,15 +300,27 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
                     if (data.isSeparator) {
                         return '';
                     }
-                    return '<input type="checkbox" class="entry-checkbox" data-entry-id="' + data.id + '">';
+                    //return '<input type="checkbox" class="entry-checkbox" data-entry-id="' + data.id + '">';
+                    return '<div style="padding: 8px; cursor: pointer;" class="checkbox-container">' +
+                   '<input type="checkbox" class="entry-checkbox" data-entry-id="' + data.id + '" ' +
+                   'style="transform: scale(1.2); cursor: pointer;">' +
+                   '</div>';
                 },
-                cellClick: function(e, cell) {
+                 cellClick: function(e, cell) {
+                // Zapobiegaj propagacji tylko gdy nie kliknięto w checkbox
+                if (!$(e.target).hasClass('entry-checkbox')) {
                     e.stopPropagation();
                     var data = cell.getRow().getData();
                     if (!data.isSeparator) {
-                        self.toggleRowSelection(data.id);
+                        // Symuluj kliknięcie checkboxa
+                        var checkbox = cell.getElement().querySelector('.entry-checkbox');
+                        if (checkbox) {
+                            checkbox.checked = !checkbox.checked;
+                            $(checkbox).trigger('change');
+                        }
                     }
                 }
+            }
             });
 
             // 2. User's field columns - PLAIN TEXT ONLY
@@ -349,15 +361,28 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
             enhancedColumns.push({
                 title: '',
                 field: 'checkbox',
-                width: 40,
+                width: 50,
                 hozAlign: "center",
                 headerSort: false,
                 formatter: function(cell) {
-                    return '<input type="checkbox" class="entry-checkbox" data-entry-id="' + cell.getRow().getData().id + '">';
+                    var data = cell.getRow().getData();
+                    return '<div style="padding: 8px; cursor: pointer;" class="checkbox-container">' +
+                   '<input type="checkbox" class="entry-checkbox" data-entry-id="' + data.id + '" ' +
+                   'style="transform: scale(1.2); cursor: pointer;">' +
+                   '</div>';
                 },
                 cellClick: function(e, cell) {
+                // Zapobiegaj propagacji tylko gdy nie kliknięto w checkbox
+                if (!$(e.target).hasClass('entry-checkbox')) {
                     e.stopPropagation();
-                    self.toggleRowSelection(cell.getRow().getData().id);
+                    var data = cell.getRow().getData();
+                    // Symuluj kliknięcie checkboxa
+                    var checkbox = cell.getElement().querySelector('.entry-checkbox');
+                    if (checkbox) {
+                        checkbox.checked = !checkbox.checked;
+                        $(checkbox).trigger('change');
+                    }
+                    }
                 }
             });
 
